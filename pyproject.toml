@@ -1,0 +1,28 @@
+[project]
+name = "main-back"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "rodzlen",email = "qkqhrkxdkdy@naver.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django (>=5.2,<6.0)",
+    "dotenv (>=0.9.9,<0.10.0)",
+    "psycopg2 (>=2.9.10,<3.0.0)",
+    "django-elasticsearch-dsl (>=8.0,<9.0)",
+    "isort (>=6.0.1,<7.0.0)",
+    "black (>=25.1.0,<26.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 80
+
+[tool.isort]
+profile = "black"
