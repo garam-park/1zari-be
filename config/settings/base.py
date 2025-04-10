@@ -52,7 +52,6 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # own
     "user",
-    "common",
     "job_position",
     "resume",
     "search",
