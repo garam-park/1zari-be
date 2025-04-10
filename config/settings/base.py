@@ -52,7 +52,6 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # own
     "user",
-    "common",
     "job_position",
     "resume",
     "search",
@@ -111,7 +110,14 @@ DATABASES = {
     }
 }
 ELASTICSEARCH_DSL = {
-    "default": {"hosts": "localhost:9200"},  # Elasticsearch 서버 주소 및 포트
+    "default": {
+        "hosts": "localhost:9200",
+        "http_auth": ("elastic", "123456"),
+        "verify_certs": False,
+        "use_ssl": True,
+        "ssl_assert_hostname": False,
+        "ssl_show_warn": False,
+    },
 }
 
 # Password validation
