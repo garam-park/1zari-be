@@ -144,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "asia/seoul"
+TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
