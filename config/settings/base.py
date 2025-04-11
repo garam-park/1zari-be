@@ -51,10 +51,11 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     # own
+    "utils",
     "user",
     "job_position",
     "resume",
-    "django_elasticsearch_dsl",
+    # "django_elasticsearch_dsl",
     # django
     "django.contrib.admin",
     "django.contrib.auth",
