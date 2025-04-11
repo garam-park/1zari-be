@@ -30,6 +30,7 @@ def test_user_info_creation():
         interest=["사무", "서비스"],
         purpose_subscription=["일자리", "재취업"],
         route=["네이버", "지인"],
+        wish_work_place="서울",
         is_active=True,
     )
     assert profile.name == "홍길동"
@@ -50,10 +51,12 @@ def test_company_info_creation():
         business_registration_number="1234567890",
         company_introduction="이 회사는 좋은 회사입니다.",
         certificate_image="http://example.com/image.jpg",
-        manager_name="김매니저",
+        ceo_name="대표",
+        manager_name="매니저",
         manager_phone_number="01099998888",
         manager_email="manager@example.com",
     )
     assert company.company_name == "테스트주식회사"
     assert company.manager_email == "manager@example.com"
+    assert company.ceo_name == "대표"
     assert not company.is_active

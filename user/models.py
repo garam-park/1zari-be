@@ -1,12 +1,15 @@
 import uuid
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from utils.models import TimestampModel
 
 
 class CommonUser(TimestampModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    common_user_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
     email = models.EmailField(max_length=50, unique=True)
     password = models.CharField(max_length=255)
     join_type = models.CharField(max_length=10)
@@ -17,16 +20,25 @@ class CommonUser(TimestampModel):
 
 
 class UserInfo(TimestampModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
     common_user = models.OneToOneField(CommonUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     phone_number = models.CharField(max_length=20, unique=True)
     gender = models.CharField(max_length=10)
     birthday = models.DateField(null=True, blank=True)
 
-    interest = models.JSONField(default=list)
-    purpose_subscription = models.JSONField(default=list)
-    route = models.JSONField(default=list)
+    interest = ArrayField(
+        models.CharField(max_length=50), default=list, blank=True
+    )
+    purpose_subscription = ArrayField(
+        models.CharField(max_length=50), default=list, blank=True
+    )
+    route = ArrayField(
+        models.CharField(max_length=50), default=list, blank=True
+    )
+    wish_work_place = models.CharField(max_length=50, null=True, blank=True)
 
     is_active = models.BooleanField(default=False)
 
@@ -35,7 +47,9 @@ class UserInfo(TimestampModel):
 
 
 class CompanyInfo(TimestampModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
     common_user = models.OneToOneField(CommonUser, on_delete=models.CASCADE)
 
     company_name = models.CharField(max_length=50)
@@ -45,6 +59,7 @@ class CompanyInfo(TimestampModel):
     company_introduction = models.TextField()
     certificate_image = models.URLField()
 
+    ceo_name = models.CharField(max_length=20)
     manager_name = models.CharField(max_length=30)
     manager_phone_number = models.CharField(max_length=30)
     manager_email = models.EmailField(max_length=50)
