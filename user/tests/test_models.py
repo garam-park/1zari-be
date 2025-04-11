@@ -1,13 +1,14 @@
-import pytest
-from user.models import CommonUser, UserInfo, CompanyInfo
 from datetime import date
+
+import pytest
+
+from user.models import CommonUser, CompanyInfo, UserInfo
+
 
 @pytest.mark.django_db
 def test_common_user_creation():
     user = CommonUser.objects.create(
-        email="test@example.com",
-        password="hashed_pw",
-        join_type="user"
+        email="test@example.com", password="hashed_pw", join_type="user"
     )
     assert user.email == "test@example.com"
     assert user.join_type == "user"
@@ -18,9 +19,7 @@ def test_common_user_creation():
 @pytest.mark.django_db
 def test_user_info_creation():
     user = CommonUser.objects.create(
-        email="user@example.com",
-        password="pw",
-        join_type="user"
+        email="user@example.com", password="pw", join_type="user"
     )
     profile = UserInfo.objects.create(
         common_user=user,
@@ -31,7 +30,7 @@ def test_user_info_creation():
         interest=["사무", "서비스"],
         purpose_subscription=["일자리", "재취업"],
         route=["네이버", "지인"],
-        is_active=True
+        is_active=True,
     )
     assert profile.name == "홍길동"
     assert profile.phone_number == "01012345678"
@@ -41,9 +40,7 @@ def test_user_info_creation():
 @pytest.mark.django_db
 def test_company_info_creation():
     company_user = CommonUser.objects.create(
-        email="biz@example.com",
-        password="pw",
-        join_type="company"
+        email="biz@example.com", password="pw", join_type="company"
     )
     company = CompanyInfo.objects.create(
         common_user=company_user,
@@ -55,7 +52,7 @@ def test_company_info_creation():
         certificate_image="http://example.com/image.jpg",
         manager_name="김매니저",
         manager_phone_number="01099998888",
-        manager_email="manager@example.com"
+        manager_email="manager@example.com",
     )
     assert company.company_name == "테스트주식회사"
     assert company.manager_email == "manager@example.com"
