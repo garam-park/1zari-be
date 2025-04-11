@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     "user",
     "job_position",
     "resume",
-    "search",
     "django_elasticsearch_dsl",
     # django
     "django.contrib.admin",
