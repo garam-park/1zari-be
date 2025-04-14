@@ -136,6 +136,20 @@ files = [
 python-dotenv = "*"
 
 [[package]]
+name = "gdal"
+version = "3.8.4"
+description = "GDAL: Geospatial Data Abstraction Library"
+optional = false
+python-versions = ">=3.6.0"
+groups = ["main"]
+files = [
+    {file = "GDAL-3.8.4.tar.gz", hash = "sha256:7c51e0ae7a7ccf43ad9e4bf435176baa9276653dfa16fd167c3632f6e7275207"},
+]
+
+[package.extras]
+numpy = ["numpy (>1.0.0)"]
+
+[[package]]
 name = "iniconfig"
 version = "2.1.0"
 description = "brain-dead simple config-ini parsing"
@@ -518,4 +532,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13"
-content-hash = "a89b56d226796ffd5e14210641d3934233e28c73c4be781dae25a1cd234976b7"
+content-hash = "2d8d9243a48804549afd0ebc7d30ce868ab1aec15e0db64f631a7d13c10d9813"
