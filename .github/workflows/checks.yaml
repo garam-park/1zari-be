@@ -13,7 +13,7 @@ jobs:
       DJANGO_SETTINGS_MODULE : config.settings.dev
     services:
       db:
-        image: postgres:14-postgis-3  # PostGIS 3 버전이 포함된 이미지 사용 (원하는 버전으로 변경 가능)
+        image: postgres:14-postgis
         ports:
           - 5432:5432
         env:
