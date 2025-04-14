@@ -57,6 +57,14 @@ jobs:
         run: |
           poetry install
 
+      - name: Install GDAL
+        run: |
+          sudo apt-get update
+          sudo apt-get install libgdal-dev
+
+      - name: Set GDAL_LIBRARY_PATH (optional but might be needed)
+        run: echo "GDAL_LIBRARY_PATH=/usr/lib/libgdal.so" >> $GITHUB_ENV
+
       - name: Run isort (Import sorting)
         run: |
           poetry run isort . --check --diff
