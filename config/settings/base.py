@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "user",
     "job_position",
     "resume",
+
     # django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
