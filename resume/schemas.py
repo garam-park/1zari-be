@@ -2,7 +2,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field,ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 # ------------------------
 # Career (경력 정보)
@@ -52,6 +52,7 @@ class ResumeModel(ResumeBaseModel):
     model_config = ConfigDict(from_attributes=True)
     resume_id: UUID
     career_list: List[CareerInfoModel]
+
 
 # ------------------------
 # 응답 모델
