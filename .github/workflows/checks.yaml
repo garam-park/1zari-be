@@ -65,10 +65,10 @@ jobs:
           echo "GEOS_LIBRARY_PATH=/usr/lib/libgeos_c.so" >> $GITHUB_ENV
           echo "GDAL_LIBRARY_PATH=/usr/lib/libgdal.so" >> $GITHUB_ENV
 
-      - name: Locate GDAL library (fast)
+      - name: Find GDAL library
         run: |
-          sudo updatedb
-          locate libgdal | grep .so || echo "No libgdal .so found"
+          sudo find /usr -name "libgdal*.so*" 2>/dev/null || echo "libgdal not found"
+      
       
 
       - name: Install Packages & Libraries with Poetry
