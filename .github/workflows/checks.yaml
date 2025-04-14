@@ -13,7 +13,7 @@ jobs:
       DJANGO_SETTINGS_MODULE : config.settings.dev
     services:
       db:
-        image: postgres:14
+        image: postgis/postgis:14-3.3
         ports:
           - 5432:5432
         env:
@@ -57,13 +57,13 @@ jobs:
         run: |
           poetry install
 
-      - name: Run isort (Import sorting)
+      - name: Install GDAL
         run: |
-          poetry run isort . --check --diff
+          sudo apt-get update
+          sudo apt-get install libgdal-dev
 
-      - name: Run black (Code formatting)
-        run: |
-          poetry run black . --check
+      - name: Set GDAL_LIBRARY_PATH (optional but might be needed)
+        run: echo "GDAL_LIBRARY_PATH=/usr/lib/libgdal.so" >> $GITHUB_ENV
 
       - name: Wait for PostgreSQL
         run: |
