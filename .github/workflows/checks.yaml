@@ -53,15 +53,17 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
-      - name: Install system dependencies (GDAL and others)
+      - name: Install system dependencies (GDAL, GEOS, etc.)
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgdal-dev gdal-bin
+          sudo apt-get install -y libgdal-dev gdal-bin libgeos-dev
 
-      - name: Set GDAL environment variables (required for builds)
+      - name: Set GDAL and GEOS environment variables
         run: |
           echo "CPLUS_INCLUDE_PATH=/usr/include/gdal" >> $GITHUB_ENV
           echo "C_INCLUDE_PATH=/usr/include/gdal" >> $GITHUB_ENV
+          echo "GEOS_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgeos_c.so" >> $GITHUB_ENV
+          echo "GDAL_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/libgdal.so" >> $GITHUB_ENV
 
       - name: Install Packages & Libraries with Poetry
         run: |
