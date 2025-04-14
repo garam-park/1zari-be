@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from django.db import models
 from django.db.models import CASCADE
+from django.db.models.manager import Manager
 
 from user.models import UserInfo
 from utils.models import TimestampModel
@@ -24,3 +25,5 @@ class Resume(TimestampModel):
 
     def __str__(self):
         return self.resume_id
+
+    objects = Manager()

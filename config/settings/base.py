@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     "user",
     "job_position",
     "resume",
-    # "django_elasticsearch_dsl",
     # django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -63,6 +62,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
 ]
 
 MIDDLEWARE = [
@@ -101,7 +101,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.db.backends.postgis",
         "NAME": os.environ.get("DB_NAME"),
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASSWORD"),
@@ -109,16 +109,7 @@ DATABASES = {
         "PORT": os.environ.get("DB_PORT"),
     }
 }
-ELASTICSEARCH_DSL = {
-    "default": {
-        "hosts": "localhost:9200",
-        "http_auth": ("elastic", "123456"),
-        "verify_certs": False,
-        "use_ssl": True,
-        "ssl_assert_hostname": False,
-        "ssl_show_warn": False,
-    },
-}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
