@@ -1,12 +1,16 @@
 import uuid
 
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    PermissionsMixin,
+)
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from utils.models import TimestampModel
 
 
-class CommonUser(TimestampModel):
+class CommonUser(AbstractBaseUser, PermissionsMixin, TimestampModel):
     """유저 공통 정보 모델 (로그인/비밀번호 등)"""
 
     # 회원 식별자
@@ -21,6 +25,14 @@ class CommonUser(TimestampModel):
     join_type = models.CharField(max_length=10)
     # 마지막 로그인 시각
     last_login = models.DateTimeField(null=True, blank=True)
+    # 활성 상태 여부
+    is_active = models.BooleanField(default=False)
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    @property
+    def is_anonymous(self):
+        return False
 
     def __str__(self):
         return self.email
@@ -59,9 +71,6 @@ class UserInfo(TimestampModel):
     # 희망 근무지
     wish_work_place = models.CharField(max_length=50, null=True, blank=True)
 
-    # 활성 상태 여부
-    is_active = models.BooleanField(default=False)
-
     def __str__(self):
         return f"{self.name} ({self.common_user.email})"
 
@@ -98,8 +107,6 @@ class CompanyInfo(TimestampModel):
     # 담당자 이메일
     manager_email = models.EmailField(max_length=50)
 
-    # 활성화 여부
-    is_active = models.BooleanField(default=False)
     # 관리자 권한 여부
     is_staff = models.BooleanField(default=False)
 
