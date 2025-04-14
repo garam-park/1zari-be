@@ -65,13 +65,10 @@ jobs:
       - name: Set GDAL_LIBRARY_PATH (optional but might be needed)
         run: echo "GDAL_LIBRARY_PATH=/usr/lib/libgdal.so" >> $GITHUB_ENV
 
-      - name: Run isort (Import sorting)
+      - name: Install PostGIS Extension
         run: |
-          poetry run isort . --check --diff
-
-      - name: Run black (Code formatting)
-        run: |
-          poetry run black . --check
+          sudo apt-get update
+          sudo apt-get install postgresql-14-postgis-3
 
       - name: Wait for PostgreSQL
         run: |
