@@ -13,7 +13,7 @@ jobs:
       DJANGO_SETTINGS_MODULE : config.settings.dev
     services:
       db:
-        image: postgres:14
+        image: postgres:14-postgis-3  # PostGIS 3 버전이 포함된 이미지 사용 (원하는 버전으로 변경 가능)
         ports:
           - 5432:5432
         env:
@@ -64,11 +64,6 @@ jobs:
 
       - name: Set GDAL_LIBRARY_PATH (optional but might be needed)
         run: echo "GDAL_LIBRARY_PATH=/usr/lib/libgdal.so" >> $GITHUB_ENV
-
-      - name: Install PostGIS Extension
-        run: |
-          sudo apt-get update
-          sudo apt-get install postgresql-postgis 3.5.2
 
       - name: Wait for PostgreSQL
         run: |
