@@ -8,9 +8,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
 
-from resume.models import CareerInfo, Resume
+from resume.models import CareerInfo, Certification, Resume
 from resume.schemas import (
     CareerInfoModel,
+    CertificationInfoModel,
     ResumeCreateModel,
     ResumeListResponseModel,
     ResumeModel,
@@ -31,6 +32,19 @@ def serialize_careers(careers: List[CareerInfo]) -> List[CareerInfoModel]:
     ]
 
 
+def serialize_certifications(
+    certifications: List[Certification],
+) -> List[CertificationInfoModel]:
+    return [
+        CertificationInfoModel(
+            certification_name=certification.certification_name,
+            issuing_organization=certification.issuing_organization,
+            date_acquired=certification.date_acquired,
+        )
+        for certification in certifications
+    ]
+
+
 @method_decorator(csrf_protect, name="dispatch")
 class MyResumeListView(View):
     """
@@ -41,18 +55,24 @@ class MyResumeListView(View):
         try:
             user_id: uuid.UUID = request.user.id
             resumes = Resume.objects.filter(user_id=user_id).prefetch_related(
-                "careers"
+                "careers", "certifications"
             )
 
             resume_models: List[ResumeModel] = []
             for resume in resumes:
                 careers = serialize_careers(resume.careers.all())
+                certifications = serialize_certifications(
+                    resume.certifications.all()
+                )
                 resume_models.append(
                     ResumeModel(
                         resume_id=resume.resume_id,
-                        education=resume.education,
+                        education_level=resume.education_level,
+                        school_name=resume.school_name,
+                        education_state=resume.education_state,
                         introduce=resume.introduce,
                         career_list=careers,
+                        certification_list=certifications,
                     )
                 )
 
@@ -76,7 +96,7 @@ class MyResumeDetailView(View):
             user = request.user
             resume = (
                 Resume.objects.filter(user_id=user, resume_id=resume_id)
-                .prefetch_related("careers")
+                .prefetch_related("careers", "certifications")
                 .first()
             )
             if not resume:
@@ -85,7 +105,11 @@ class MyResumeDetailView(View):
             career_models = serialize_careers(resume.careers.all())
             resume_model = ResumeModel(
                 resume_id=resume.resume_id,
-                education=resume.education,
+                job_category=resume.job_category,
+                resume_title=resume.resume_title,
+                education_level=resume.education_level,
+                school_name=resume.schoolname,
+                education_state=resume.education_state,
                 introduce=resume.introduce,
                 career_list=career_models,
             )
@@ -108,7 +132,11 @@ class MyResumeDetailView(View):
             with transaction.atomic():
                 new_resume = Resume.objects.create(
                     user_id=user,
-                    education=resume_data.education,
+                    resume_title=resume_data.resume_title,
+                    job_category=resume_data.job_category,
+                    education_level=resume_data.education_level,
+                    school_name=resume_data.school_name,
+                    education_state=resume_data.education_state,
                     introduce=resume_data.introduce,
                 )
 
@@ -120,13 +148,27 @@ class MyResumeDetailView(View):
                         employment_period_start=career.employment_period_start,
                         employment_period_end=career.employment_period_end,
                     )
-
+                for certification in resume_data.certification_list:
+                    Certification.objects.create(
+                        resume=new_resume,
+                        certification_name=certification.certification_name,
+                        issuing_organization=certification.issuing_organization,
+                        date_acquired=certification.date_acquired,
+                    )
                 career_models = serialize_careers(new_resume.careers.all())
+                certification_models = serialize_certifications(
+                    new_resume.certifications.all()
+                )
                 resume_model = ResumeModel(
                     resume_id=new_resume.resume_id,
-                    education=new_resume.education,
+                    resume_title=new_resume.resume_title,
+                    job_category=new_resume.job_category,
+                    education_level=new_resume.education_level,
+                    school_name=new_resume.school_name,
+                    education_state=new_resume.education_state,
                     introduce=new_resume.introduce,
                     career_list=career_models,
+                    certification_list=certification_models,
                 )
                 response = ResumeResponseModel(
                     message="Resume created successfully", resume=resume_model
@@ -147,15 +189,23 @@ class MyResumeDetailView(View):
 
             resume = (
                 Resume.objects.filter(user_id=user, resume_id=resume_id)
-                .prefetch_related("careers")
+                .prefetch_related("careers", "certifications")
                 .first()
             )
             if not resume:
                 return JsonResponse({"error": "Resume not found"}, status=404)
 
             # 기본 정보 수정
-            if update_data.education is not None:
-                resume.education = update_data.education
+            if update_data.job_category is not None:
+                resume.job_category = update_data.job_category
+            if update_data.resume_title is not None:
+                resume.resume_title = update_data.resume_title
+            if update_data.education_level is not None:
+                resume.education_level = update_data.education_level
+            if update_data.school_name is not None:
+                resume.school_name = update_data.school_name
+            if update_data.education_state is not None:
+                resume.education_state = update_data.education_state
             if update_data.introduce is not None:
                 resume.introduce = update_data.introduce
             resume.save()
@@ -171,13 +221,31 @@ class MyResumeDetailView(View):
                         employment_period_start=career.employment_period_start,
                         employment_period_end=career.employment_period_end,
                     )
+            if update_data.certification_list is not None:
+                resume.certifications.all().delete()
+                for certification in update_data.certification_list:
+                    Certification.objects.create(
+                        resume=resume,
+                        certification_name=certification.certification_name,
+                        issuing_organization=certification.issuing_organization,
+                        date_acquired=certification.date_acquired,
+                    )
 
             career_models = serialize_careers(resume.careers.all())
+            certification_models = serialize_certifications(
+                resume.certifications.all()
+            )
+
             resume_model = ResumeModel(
                 resume_id=resume.resume_id,
-                education=resume.education,
+                job_category=resume.job_category,
+                resume_title=resume.resume_title,
+                education_level=resume.education_level,
+                school_name=resume.school_name,
+                education_state=resume.education_state,
                 introduce=resume.introduce,
                 career_list=career_models,
+                certification_list=certification_models,
             )
             response = ResumeResponseModel(
                 message="Resume updated successfully", resume=resume_model
