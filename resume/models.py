@@ -65,7 +65,7 @@ class CareerInfo(TimestampModel):
     objects = Manager()
 
     def __str__(self):
-        return str(self.career_info_id)
+        return f"{self.company_name} - {self.position}"
 
 
 class Certification(TimestampModel):
@@ -82,7 +82,7 @@ class Certification(TimestampModel):
     certification_name = models.CharField(
         verbose_name="자격증 이름", max_length=20
     )
-    issuing_organizatio = models.CharField(
+    issuing_organization = models.CharField(
         verbose_name="발급 기관", max_length=20
     )
     date_acquired = models.DateField(verbose_name="취득일")

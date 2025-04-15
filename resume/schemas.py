@@ -28,14 +28,35 @@ class CareerInfoModel(CareerInfoBaseModel):
 
 
 # ------------------------
+# Certification (자격증)
+# ------------------------
+
+class CertificationBaseModel(BaseModel):
+    certification_name : str
+    issuing_organization : str
+    date_acquired: date
+
+class CertificationInfoCreateModel(CertificationBaseModel):
+    pass
+
+class CertificationInfoModel(CertificationBaseModel):
+    pass
+
+# ------------------------
 # Resume (이력서)
 # ------------------------
 
 
 class ResumeBaseModel(BaseModel):
-    education: str
+    job_category: str = ""
+    resume_title: str
+    education_level: str
+    school_name: str
+    education_state: str
     introduce: str
+
     career_list: List[CareerInfoCreateModel] = Field(default_factory=list)
+    certification_list: List[CertificationInfoCreateModel] = Field(default_factory=list)
 
 
 class ResumeCreateModel(ResumeBaseModel):
@@ -46,12 +67,21 @@ class ResumeUpdateModel(BaseModel):
     education: Optional[str] = None
     introduce: Optional[str] = None
     career_list: Optional[List[CareerInfoCreateModel]] = None
+    certification_list: Optional[List[CertificationInfoCreateModel]] = None
 
 
 class ResumeModel(ResumeBaseModel):
     model_config = ConfigDict(from_attributes=True)
     resume_id: UUID
     career_list: List[CareerInfoModel]
+    certification_list: List[CertificationInfoModel]
+
+
+# ------------------------
+# Submission (지원한 이력서)
+# ------------------------
+
+
 
 
 # ------------------------
