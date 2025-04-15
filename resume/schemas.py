@@ -31,16 +31,20 @@ class CareerInfoModel(CareerInfoBaseModel):
 # Certification (자격증)
 # ------------------------
 
+
 class CertificationBaseModel(BaseModel):
-    certification_name : str
-    issuing_organization : str
+    certification_name: str
+    issuing_organization: str
     date_acquired: date
+
 
 class CertificationInfoCreateModel(CertificationBaseModel):
     pass
 
+
 class CertificationInfoModel(CertificationBaseModel):
     pass
+
 
 # ------------------------
 # Resume (이력서)
@@ -56,7 +60,9 @@ class ResumeBaseModel(BaseModel):
     introduce: str
 
     career_list: List[CareerInfoCreateModel] = Field(default_factory=list)
-    certification_list: List[CertificationInfoCreateModel] = Field(default_factory=list)
+    certification_list: List[CertificationInfoCreateModel] = Field(
+        default_factory=list
+    )
 
 
 class ResumeCreateModel(ResumeBaseModel):
@@ -80,8 +86,6 @@ class ResumeModel(ResumeBaseModel):
 # ------------------------
 # Submission (지원한 이력서)
 # ------------------------
-
-
 
 
 # ------------------------
