@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     # own
     "utils",
     "user",
-    "job_position",
+    "job_posting",
     "resume",
     # django
     "django.contrib.admin",
