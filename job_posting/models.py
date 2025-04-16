@@ -22,8 +22,8 @@ class JobPosting(TimestampModel):
     work_time_end = models.DateTimeField()  # 근무 종료 시간
     posting_type = models.CharField(max_length=10)  # 고용 형태
     employment_type = models.CharField(max_length=10)  # 경력 여부
-    job_keyword_main = models.CharField(max_length=20) # 직종 대분류
-    job_keyword_sub = models.CharField(max_length=20) # 직종 중분류
+    job_keyword_main = models.CharField(max_length=20)  # 직종 대분류
+    job_keyword_sub = models.CharField(max_length=20)  # 직종 중분류
     number_of_positions = models.IntegerField()  # 채용 인원 수
     company_id = models.ForeignKey(
         "user.CompanyInfo",
