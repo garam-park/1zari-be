@@ -2,12 +2,31 @@ import uuid
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
+    BaseUserManager,
     PermissionsMixin,
 )
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from utils.models import TimestampModel
+
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("The Email field must be set")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_active", True)
+
+        return self.create_user(email, password, **extra_fields)
 
 
 class CommonUser(AbstractBaseUser, PermissionsMixin, TimestampModel):
@@ -29,6 +48,7 @@ class CommonUser(AbstractBaseUser, PermissionsMixin, TimestampModel):
     is_active = models.BooleanField(default=False)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+    objects = CustomUserManager()
 
     @property
     def is_anonymous(self):
@@ -68,8 +88,6 @@ class UserInfo(TimestampModel):
     route = ArrayField(
         models.CharField(max_length=50), default=list, blank=True
     )
-    # 희망 근무지
-    wish_work_place = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.common_user.email})"
@@ -95,9 +113,14 @@ class CompanyInfo(TimestampModel):
     business_registration_number = models.CharField(max_length=20)
     # 회사 소개
     company_introduction = models.TextField()
-    # 사업자 등록증 이미지 URL
-    certificate_image = models.URLField()
-
+    # 사업자 등록증 이미지
+    certificate_image = models.ImageField(
+        upload_to="certificate_image/", null=True, blank=True
+    )
+    # 회사 로고 이미지
+    company_logo = models.ImageField(
+        upload_to="company_logos/", null=True, blank=True
+    )
     # 대표 이름
     ceo_name = models.CharField(max_length=20)
     # 담당자 이름
