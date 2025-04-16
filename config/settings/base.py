@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "user",
     "job_posting",
     "resume",
+    "search",
     # django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -157,5 +158,5 @@ APPEND_SLASH = True
 
 AUTH_USER_MODEL = "user.CommonUser"
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
