@@ -1,14 +1,20 @@
 from django.contrib.gis.db import models
+from django.db.models.manager import Manager
 
 
 class District(models.Model):
     city_no = models.CharField(verbose_name="시 고유번호", max_length=10)
-    city_name = models.CharField(verbose_name="시 이름", max_length=20)
-    district_no = models.CharField(
-        verbose_name="구 고유번호", max_length=10, unique=True
+    city_name = models.CharField(verbose_name="시 이름", max_length=40)
+    district_no = models.CharField(verbose_name="구 고유번호", max_length=10)
+    district_name = models.CharField(verbose_name="구 이름", max_length=40)
+    emd_no = models.CharField(
+        verbose_name="읍면동 고유번호", max_length=10, unique=True
     )
-    district_name = models.CharField(verbose_name="구 이름", max_length=20)
-    geometry = models.MultiPolygonField(verbose_name="구 경계", srid=5179)
+    emd_name = models.CharField(verbose_name="읍면동 이름", max_length=40)
+
+    geometry = models.MultiPolygonField(verbose_name="읍면동 경계", srid=5179)
+
+    objects = Manager()
 
     def __str__(self):
-        return f"{self.city_name} {self.district_name}"
+        return f"{self.city_name} {self.district_name} {self.emd_name}"
