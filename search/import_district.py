@@ -11,7 +11,7 @@ district_mapping = {
     "geometry": "POLYGON",  # 또는 'geometry'
 }
 
-shp_file = str(BASE_DIR / "search/data/new_city_district.shp")
+shp_file = str(BASE_DIR / "search/data/new_new_city_district.shp")
 
 
 def run(verbose=True):
