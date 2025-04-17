@@ -3,6 +3,7 @@ import uuid
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField
 
+from user.models import CommonUser
 from utils.models import TimestampModel
 
 
@@ -23,7 +24,9 @@ class JobPosting(TimestampModel):
     posting_type = models.CharField(max_length=10)  # 고용 형태
     employment_type = models.CharField(max_length=10)  # 경력 여부
     job_keyword_main = models.CharField(max_length=20)  # 직종 대분류
-    job_keyword_sub = models.CharField(max_length=20)  # 직종 중분류
+    job_keyword_sub = ArrayField(
+        models.CharField(max_length=50), blank=True, default=list
+    )  # 직종 중분류
     number_of_positions = models.IntegerField()  # 채용 인원 수
     company_id = models.ForeignKey(
         "user.CompanyInfo",
@@ -45,3 +48,36 @@ class JobPosting(TimestampModel):
 
     def __str__(self):
         return self.job_posting_title
+
+
+# job_posting/models.py 또는 별도 app/models.py
+
+from django.conf import settings
+from django.db import models
+
+from utils.models import TimestampModel
+
+
+class JobPostingBookmark(TimestampModel):
+    """
+    유저 - 공고 북마크 조인 테이블
+    """
+
+    user = models.ForeignKey(
+        "user.CommonUser",
+        on_delete=models.CASCADE,
+        related_name="bookmarked_postings",
+    )
+    job_posting = models.ForeignKey(
+        "job_posting.JobPosting",
+        on_delete=models.CASCADE,
+        related_name="bookmarked_users",
+    )
+
+    class Meta:
+        unique_together = ("user", "job_posting")  # 북마크 중복 방지
+        verbose_name = "공고 북마크"
+        verbose_name_plural = "공고 북마크 목록"
+
+    def __str__(self):
+        return f"{self.user}_{self.job_posting.job_posting_title}"
