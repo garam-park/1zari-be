@@ -70,15 +70,25 @@ class ResumeCreateModel(ResumeBaseModel):
 
 
 class ResumeUpdateModel(BaseModel):
-    education: Optional[str] = None
-    introduce: Optional[str] = None
+    job_category: str = ""
+    resume_title: str
+    education_level: str
+    school_name: str
+    education_state : str
+    introduce: str
     career_list: Optional[List[CareerInfoCreateModel]] = None
     certification_list: Optional[List[CertificationInfoCreateModel]] = None
 
 
-class ResumeModel(ResumeBaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class ResumeModel(BaseModel):
+    model_config = ConfigDict()
     resume_id: UUID
+    job_category: str = ""
+    resume_title: str
+    education_level: str
+    school_name: str
+    education_state: str
+    introduce: str
     career_list: List[CareerInfoModel]
     certification_list: List[CertificationInfoModel]
 
