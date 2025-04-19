@@ -8,7 +8,6 @@ from job_posting.schemas import JobPostingBaseModel, JobPostingListModel
 from user.schemas import UserInfoModel
 from utils.schemas import CustomBaseModel
 
-
 # ------------------------
 # Career (경력 정보)
 # ------------------------
@@ -84,8 +83,10 @@ class ResumeUpdateModel(BaseModel):
     career_list: Optional[List[CareerInfoCreateModel]] = None
     certification_list: Optional[List[CertificationInfoCreateModel]] = None
 
+
 class ResumeInfoModel(ResumeBaseModel):
     pass
+
 
 class ResumeModel(BaseModel):
     model_config = ConfigDict()
@@ -96,7 +97,7 @@ class ResumeModel(BaseModel):
     school_name: str
     education_state: str
     introduce: str
-    user : UserInfoModel
+    user: UserInfoModel
     career_list: List[CareerInfoModel]
     certification_list: List[CertificationInfoModel]
 
@@ -105,20 +106,20 @@ class ResumeModel(BaseModel):
 # Submission (지원한 이력서)
 # ------------------------
 class JobpostingListOutputModel(JobPostingListModel):
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
+
 
 class SubmissionBaseModel(CustomBaseModel):
-    job_posting : JobPostingBaseModel
-    resume : ResumeModel
-    memo : Optional[str] = ""
-    is_read : bool
+    job_posting: JobPostingBaseModel
+    resume: ResumeModel
+    memo: Optional[str] = ""
+    is_read: bool
+
 
 class SubmissionModel(SubmissionBaseModel):
-    submission_id : UUID
-    job_posting : JobpostingListOutputModel
+    submission_id: UUID
+    job_posting: JobpostingListOutputModel
     created_at: date
-
-
 
 
 # ------------------------
@@ -135,7 +136,7 @@ class ResumeListResponseModel(BaseModel):
     message: str
     resume_list: List[ResumeModel]
 
-class SubmissionListResponseModel(CustomBaseModel):
-    message : str
-    submission_list : List[SubmissionModel]
 
+class SubmissionListResponseModel(CustomBaseModel):
+    message: str
+    submission_list: List[SubmissionModel]

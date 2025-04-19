@@ -16,12 +16,13 @@ from resume.schemas import (
     ResumeListResponseModel,
     ResumeModel,
     ResumeResponseModel,
-    ResumeUpdateModel
+    ResumeUpdateModel,
 )
 
 # ------------------------
 # serializer (추후 분리 예정)
 # ------------------------
+
 
 def serialize_careers(careers: List[CareerInfo]) -> List[CareerInfoModel]:
     return [
@@ -47,9 +48,11 @@ def serialize_certifications(
         for certification in certifications
     ]
 
+
 # ------------------------
 # 이력서 관련 api
 # ------------------------
+
 
 @method_decorator(csrf_protect, name="dispatch")
 class MyResumeListView(View):
@@ -62,9 +65,11 @@ class MyResumeListView(View):
         내 이력서 리스트 조회
         """
         try:
-            user = request.user # 토큰 정보에 따라 수정
-            resumes = Resume.objects.filter(user=user).select_related("resumes").prefetch_related(
-                "careers", "certifications"
+            user = request.user  # 토큰 정보에 따라 수정
+            resumes = (
+                Resume.objects.filter(user=user)
+                .select_related("resumes")
+                .prefetch_related("careers", "certifications")
             )
 
             resume_models: List[ResumeModel] = []
@@ -75,7 +80,7 @@ class MyResumeListView(View):
                 )
                 resume_models.append(
                     ResumeModel(
-                        user= resume.user,
+                        user=resume.user,
                         resume_id=resume.resume_id,
                         resume_title=resume.resume_title,
                         education_level=resume.education_level,
@@ -102,7 +107,7 @@ class MyResumeDetailView(View):
     이력서 단일 조회 / 생성 / 수정 / 삭제
     """
 
-    def get(self, request: HttpRequest, resume_id: uuid.UUID) -> HttpResponse:
+    def get(self, request: HttpRequest, resume_id: uuid.UUID) -> JsonResponse:
         # TODO Resume user 파라미터 확인
         try:
             user = request.user
@@ -234,7 +239,6 @@ class MyResumeDetailView(View):
             return JsonResponse(response.model_dump(), status=200)
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
-
 
     def patch(self, request: HttpRequest, resume_id: uuid.UUID) -> JsonResponse:
         """
