@@ -14,7 +14,7 @@ from utils.schemas import CustomBaseModel
 # ------------------------
 
 
-class CareerInfoBaseModel(CustomBaseModel):
+class CareerInfoBaseModel(BaseModel):
     company_name: str
     position: str
     employment_period_start: date
@@ -37,7 +37,7 @@ class CareerInfoModel(CareerInfoBaseModel):
 # ------------------------
 
 
-class CertificationBaseModel(CustomBaseModel):
+class CertificationBaseModel(BaseModel):
     certification_name: str
     issuing_organization: str
     date_acquired: date
@@ -56,7 +56,7 @@ class CertificationInfoModel(CertificationBaseModel):
 # ------------------------
 
 
-class ResumeBaseModel(CustomBaseModel):
+class ResumeBaseModel(BaseModel):
     job_category: str = ""
     resume_title: str
     education_level: str
@@ -74,17 +74,28 @@ class ResumeCreateModel(ResumeBaseModel):
     pass
 
 
-class ResumeUpdateModel(CustomBaseModel):
-    education: Optional[str] = None
-    introduce: Optional[str] = None
+class ResumeUpdateModel(BaseModel):
+    job_category: str = ""
+    resume_title: str
+    education_level: str
+    school_name: str
+    education_state: str
+    introduce: str
     career_list: Optional[List[CareerInfoCreateModel]] = None
     certification_list: Optional[List[CertificationInfoCreateModel]] = None
 
 class ResumeInfoModel(ResumeBaseModel):
     pass
 
-class ResumeModel(ResumeBaseModel):
+class ResumeModel(BaseModel):
+    model_config = ConfigDict()
     resume_id: UUID
+    job_category: str = ""
+    resume_title: str
+    education_level: str
+    school_name: str
+    education_state: str
+    introduce: str
     user : UserInfoModel
     career_list: List[CareerInfoModel]
     certification_list: List[CertificationInfoModel]
@@ -115,12 +126,12 @@ class SubmissionModel(SubmissionBaseModel):
 # ------------------------
 
 
-class ResumeResponseModel(CustomBaseModel):
+class ResumeResponseModel(BaseModel):
     message: str
     resume: ResumeModel
 
 
-class ResumeListResponseModel(CustomBaseModel):
+class ResumeListResponseModel(BaseModel):
     message: str
     resume_list: List[ResumeModel]
 
