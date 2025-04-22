@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
 
-from resume.models import CareerInfo, Certification, Resume
+from resume.models import CareerInfo, Certification, Resume, Submission
 from resume.schemas import (
     CareerInfoModel,
     CertificationInfoModel,
