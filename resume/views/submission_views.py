@@ -59,8 +59,7 @@ class SubmissionListView(View):
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
-
-    def post(self,request:HttpRequest) -> JsonResponse:
+    def post(self, request: HttpRequest) -> JsonResponse:
         """
         공고 지원 (유저)
         """
@@ -202,7 +201,9 @@ class SubmissionDetailView(View):
             return JsonResponse({"errors": str(e)}, status=400)
 
 
-def save_submission(job_posting: JobPosting, user: UserInfo, resume: Resume) -> Submission:
+def save_submission(
+    job_posting: JobPosting, user: UserInfo, resume: Resume
+) -> Submission:
     # 이력서 정보 dict로 직렬화
     career_model: list[CareerInfoModel] = serialize_careers(
         list(resume.careers.all())
