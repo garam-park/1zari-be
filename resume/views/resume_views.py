@@ -303,7 +303,11 @@ def update_resume(
                 date_acquired=certification.date_acquired,
             )
 
-    updated_resume = Resume.objects.filter(resume_id=resume.resume_id).prefetch_related("careers", "certifications").first()
+    updated_resume = (
+        Resume.objects.filter(resume_id=resume.resume_id)
+        .prefetch_related("careers", "certifications")
+        .first()
+    )
 
     if updated_resume is None:
         raise Resume.DoesNotExist(
@@ -311,7 +315,8 @@ def update_resume(
         )
     career_models = serialize_careers(list(updated_resume.careers.all()))
     certification_models = serialize_certifications(
-        list(updated_resume.certifications.all()))
+        list(updated_resume.certifications.all())
+    )
 
     return ResumeOutputModel(
         resume_id=updated_resume.resume_id,
