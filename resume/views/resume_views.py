@@ -43,8 +43,9 @@ class MyResumeListView(View):
             token = request.user
             user: UserInfo = get_vaild_nomal_user(token)
             resumes: list[Resume] = list(
-                Resume.objects.filter(user=user)
-                .prefetch_related("careers", "certifications")
+                Resume.objects.filter(user=user).prefetch_related(
+                    "careers", "certifications"
+                )
             )
 
             resume_models: List[ResumeOutputModel] = []

@@ -13,26 +13,29 @@ def mock_common_user(db):
         email="test@test.com",
         password="1q2w3e4r",
         join_type="nomal",
-        is_active=True
+        is_active=True,
     )
     return user
 
+
 @pytest.fixture
 def mock_user(db, mock_common_user):
-    user_info : UserInfo = UserInfo.objects.create(
+    user_info: UserInfo = UserInfo.objects.create(
         common_user=mock_common_user,
         name="test_name",
         phone_number="010123123",
         gender="male",
         interest=[],
         purpose_subscription=[],
-        route=[]
+        route=[],
     )
     return user_info
+
 
 @pytest.fixture
 def factory():
     return RequestFactory()
+
 
 @pytest.mark.django_db
 def test_my_resume_list_view_get(factory, mock_user, mock_common_user):

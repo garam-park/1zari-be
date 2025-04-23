@@ -1,9 +1,11 @@
 import uuid
+
 import pytest
 from django.utils import timezone
 
 from resume.models import Resume
 from user.models import CommonUser, UserInfo
+
 
 @pytest.mark.django_db
 def test_resume_creation():
@@ -38,10 +40,11 @@ def test_resume_creation():
     assert resume.resume_title == "테스트이력서"
     assert resume.education_level == "대학교"
     assert resume.school_name == "경희대"
-    assert resume.education_state =="학사졸업"
+    assert resume.education_state == "학사졸업"
     assert resume.introduce == "자기소개 내용입니다."
     assert resume.created_at is not None
     assert resume.updated_at is not None
+
 
 @pytest.mark.django_db
 def test_resume_deletion():
@@ -79,6 +82,7 @@ def test_resume_deletion():
     # 유저 정보 남아있는지 확인
     assert CommonUser.objects.get(common_user_id=common_user.common_user_id)
     assert UserInfo.objects.get(user_id=user_info.user_id)
+
 
 @pytest.mark.django_db
 def test_resume_str_method():

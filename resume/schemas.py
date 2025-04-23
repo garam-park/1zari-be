@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from job_posting.schemas import  JobPostingListModel
+from job_posting.schemas import JobPostingListModel
 from user.models import UserInfo
 from user.schemas import UserInfoModel
 from utils.schemas import MY_CONFIG

@@ -11,8 +11,7 @@ from user.views.views import (
     UserSignupView,
 )
 from user.views.views_token import TokenRefreshView
-from user.views.views_verify import (
-    #SendVerificationCodeView,
+from user.views.views_verify import (  # SendVerificationCodeView,
     VerifyBusinessRegistrationView,
     VerifyCodeView,
 )
