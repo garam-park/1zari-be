@@ -25,6 +25,7 @@ dependencies = [
     "types-redis (>=4.6.0.20241004,<5.0.0.0)",
     "types-requests (>=2.32.0.20250328,<3.0.0.0)",
     "types-pyjwt (>=1.7.1,<2.0.0)",
+    "email-validator (>=2.2.0,<3.0.0)",
     "redis (>=5.2.1,<6.0.0)"
 ]
 
