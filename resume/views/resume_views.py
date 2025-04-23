@@ -198,25 +198,12 @@ class MyResumeDetailView(View):
                 return JsonResponse(
                     {"error": "Not found resume data"}, status=404
                 )
+
+            # 업데이트 및 직렬화 포함
             updated_resume = update_resume(resume_to_update, update_data)
 
-            career_models = updated_resume.career_list
-            certification_models = updated_resume.certification_list
-
-            resume_model = ResumeOutputModel(
-                resume_id=updated_resume.resume_id,
-                job_category=updated_resume.job_category,
-                resume_title=updated_resume.resume_title,
-                education_level=updated_resume.education_level,
-                school_name=updated_resume.school_name,
-                education_state=updated_resume.education_state,
-                introduce=updated_resume.introduce,
-                career_list=career_models,
-                certification_list=certification_models,
-                user=UserInfoModel.model_validate(user),
-            )
             response = ResumeResponseModel(
-                message="Resume updated successfully", resume=resume_model
+                message="Resume updated successfully", resume=updated_resume
             )
             return JsonResponse(response.model_dump(), status=200)
 
@@ -230,7 +217,8 @@ class MyResumeDetailView(View):
         이력서 삭제
         """
         try:
-            user = request.user
+            token = request.user
+            user = get_vaild_nomal_user(token)
             resume = Resume.objects.get(user_id=user, resume_id=resume_id)  # type: ignore
             resume.delete()
             return JsonResponse(
@@ -315,13 +303,25 @@ def update_resume(
                 date_acquired=certification.date_acquired,
             )
 
-    updated_resume = (
-        Resume.objects.filter(resume_id=resume.resume_id)
-        .prefetch_related("careers", "certifications")
-        .first()
-    )
-    if update_data is None:
+    updated_resume = Resume.objects.filter(resume_id=resume.resume_id).prefetch_related("careers", "certifications").first()
+
+    if updated_resume is None:
         raise Resume.DoesNotExist(
             f"Resume with id {resume.resume_id} does not exist."
         )
-    return ResumeOutputModel.model_validate(updated_resume)
+    career_models = serialize_careers(list(updated_resume.careers.all()))
+    certification_models = serialize_certifications(
+        list(updated_resume.certifications.all()))
+
+    return ResumeOutputModel(
+        resume_id=updated_resume.resume_id,
+        job_category=updated_resume.job_category,
+        resume_title=updated_resume.resume_title,
+        education_level=updated_resume.education_level,
+        school_name=updated_resume.school_name,
+        education_state=updated_resume.education_state,
+        introduce=updated_resume.introduce,
+        user=UserInfoModel.model_validate(updated_resume.user),
+        career_list=career_models,
+        certification_list=certification_models,
+    )
