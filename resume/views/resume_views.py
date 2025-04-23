@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
 
-from resume.models import CareerInfo, Certification, Resume, Submission
+from resume.models import CareerInfo, Certification, Resume
 from resume.schemas import (
     CareerInfoModel,
     CertificationInfoModel,
@@ -21,6 +21,7 @@ from resume.schemas import (
 )
 from resume.serializer import serialize_careers, serialize_certifications
 from user.models import UserInfo
+from user.schemas import UserInfoModel
 from utils.common import get_vaild_nomal_user
 
 # ------------------------
@@ -42,9 +43,9 @@ class MyResumeListView(View):
             token = request.user
             user: UserInfo = get_vaild_nomal_user(token)
             resumes: list[Resume] = list(
-                Resume.objects.filter(user=user)
-                .select_related("resumes")
-                .prefetch_related("careers", "certifications")
+                Resume.objects.filter(user=user).prefetch_related(
+                    "careers", "certifications"
+                )
             )
 
             resume_models: List[ResumeOutputModel] = []
@@ -57,7 +58,7 @@ class MyResumeListView(View):
                 )
                 resume_models.append(
                     ResumeOutputModel(
-                        user=resume.user,
+                        user=UserInfoModel.model_validate(resume.user),
                         resume_id=resume.resume_id,
                         resume_title=resume.resume_title,
                         education_level=resume.education_level,
@@ -103,7 +104,7 @@ class MyResumeListView(View):
                 )
                 resume_model = ResumeOutputModel(
                     resume_id=new_resume.resume_id,
-                    user=user,
+                    user=UserInfoModel.model_validate(user),
                     resume_title=new_resume.resume_title,
                     job_category=new_resume.job_category,
                     education_level=new_resume.education_level,
@@ -167,7 +168,7 @@ class MyResumeDetailView(View):
                 school_name=resume.school_name,
                 education_state=resume.education_state,
                 introduce=resume.introduce,
-                user=resume.user,
+                user=UserInfoModel.model_validate(resume.user),
                 career_list=career_models,
                 certification_list=certification_models,
             )
@@ -212,7 +213,7 @@ class MyResumeDetailView(View):
                 introduce=updated_resume.introduce,
                 career_list=career_models,
                 certification_list=certification_models,
-                user=user,
+                user=UserInfoModel.model_validate(user),
             )
             response = ResumeResponseModel(
                 message="Resume updated successfully", resume=resume_model
