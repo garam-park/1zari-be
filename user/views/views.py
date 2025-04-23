@@ -78,9 +78,15 @@ class UserSignupView(View):
             body = json.loads(request.body.decode())
             signup_data = UserSignupRequest(**body)  #
 
-            user = CommonUser.objects.get(
-                common_user_id=signup_data.common_user_id
-            )
+            # CommonUser 존재 여부 확인
+            try:
+                user = CommonUser.objects.get(
+                    common_user_id=signup_data.common_user_id
+                )
+            except CommonUser.DoesNotExist:
+                return JsonResponse(
+                    {"message": "유저를 찾을 수 없습니다."}, status=400
+                )
 
             # 이미 UserInfo가 존재하는지 확인
             if UserInfo.objects.filter(common_user=user).exists():
@@ -122,6 +128,7 @@ class UserSignupView(View):
             return JsonResponse(response.model_dump(), status=201)
 
         except ValidationError as e:
+            print(e.errors())  # 에러 로그 출력
             return JsonResponse(
                 {"message": "잘못된 입력", "errors": e.errors()}, status=422
             )

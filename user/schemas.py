@@ -4,18 +4,19 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
+from utils.schemas import MY_CONFIG
+
 # ------------------------
 # 공통 유저 (CommonUser)
 # ------------------------
 
 
 class CommonUserBaseModel(BaseModel):
+    model_config = MY_CONFIG
+
     email: EmailStr
     join_type: str
     password: str
-
-    class Config:
-        orm_mode = True
 
 
 class CommonUserResponseModel(BaseModel):
@@ -35,9 +36,9 @@ class CommonUserResponseModel(BaseModel):
 
 
 class UserSignupRequest(BaseModel):
+    model_config = MY_CONFIG
+
     common_user_id: UUID
-    email: EmailStr
-    password: str
     name: str
     phone_number: str
     gender: str
@@ -45,9 +46,6 @@ class UserSignupRequest(BaseModel):
     interest: List[str] = Field(default_factory=list)
     purpose_subscription: List[str] = Field(default_factory=list)
     route: List[str] = Field(default_factory=list)
-
-    class Config:
-        orm_mode = True
 
 
 # ------------------------
@@ -56,6 +54,8 @@ class UserSignupRequest(BaseModel):
 
 
 class UserInfoBaseModel(BaseModel):
+    model_config = MY_CONFIG
+
     name: str
     phone_number: str
     gender: str
@@ -64,11 +64,10 @@ class UserInfoBaseModel(BaseModel):
     purpose_subscription: List[str] = Field(default_factory=list)
     route: List[str] = Field(default_factory=list)
 
-    class Config:
-        orm_mode = True
-
 
 class UserInfoModel(BaseModel):
+    model_config = MY_CONFIG
+
     user_id: UUID
     name: str
     phone_number: str
@@ -78,9 +77,6 @@ class UserInfoModel(BaseModel):
     purpose_subscription: List[str] = Field(default_factory=list)
     route: List[str] = Field(default_factory=list)
 
-    class Config:
-        orm_mode = True
-
 
 # ------------------------
 # 기업 유저 가입 요청 모델
@@ -88,9 +84,9 @@ class UserInfoModel(BaseModel):
 
 
 class CompanySignupRequest(BaseModel):
+    model_config = MY_CONFIG
+
     common_user_id: UUID
-    email: EmailStr
-    password: str
     company_name: str
     establishment: date
     company_address: str
@@ -103,9 +99,6 @@ class CompanySignupRequest(BaseModel):
     manager_phone_number: str
     manager_email: EmailStr
     is_staff: bool
-
-    class Config:
-        orm_mode = True
 
 
 # ------------------------
@@ -114,6 +107,8 @@ class CompanySignupRequest(BaseModel):
 
 
 class CompanyInfoBaseModel(BaseModel):
+    model_config = MY_CONFIG
+
     company_name: str
     establishment: date
     company_address: str
@@ -127,12 +122,21 @@ class CompanyInfoBaseModel(BaseModel):
     manager_email: EmailStr
     is_staff: bool
 
-    class Config:
-        orm_mode = True
 
-
-class CompanyInfoModel(CompanyInfoBaseModel):
+class CompanyInfoModel(BaseModel):
     company_id: UUID
+    company_name: str
+    establishment: date
+    company_address: str
+    business_registration_number: str
+    company_introduction: str
+    certificate_image: str
+    company_logo: Optional[str] = None
+    ceo_name: str
+    manager_name: str
+    manager_phone_number: str
+    manager_email: EmailStr
+    is_staff: bool
 
 
 # ------------------------
@@ -141,21 +145,19 @@ class CompanyInfoModel(CompanyInfoBaseModel):
 
 
 class UserJoinResponseModel(BaseModel):
+    model_config = MY_CONFIG
+
     message: str
     common_user: CommonUserResponseModel
     user_info: Optional[UserInfoModel] = None
 
-    class Config:
-        orm_mode = True
-
 
 class CompanyJoinResponseModel(BaseModel):
+    model_config = MY_CONFIG
+
     message: str
     common_user: CommonUserResponseModel
     company_info: Optional[CompanyInfoModel] = None
-
-    class Config:
-        orm_mode = True
 
 
 # ------------------------
@@ -164,16 +166,22 @@ class CompanyJoinResponseModel(BaseModel):
 
 
 class UserLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
     email: EmailStr
     password: str
 
 
 class CompanyLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
     email: EmailStr
     password: str
 
 
 class UserLoginResponse(BaseModel):
+    model_config = MY_CONFIG
+
     message: str
     access_token: str
     refresh_token: str
@@ -181,6 +189,8 @@ class UserLoginResponse(BaseModel):
 
 
 class CompanyLoginResponse(BaseModel):
+    model_config = MY_CONFIG
+
     message: str
     access_token: str
     refresh_token: str
@@ -193,6 +203,8 @@ class CompanyLoginResponse(BaseModel):
 
 
 class LogoutRequest(BaseModel):
+    model_config = MY_CONFIG
+
     refresh_token: str
 
 
@@ -202,10 +214,14 @@ class LogoutRequest(BaseModel):
 
 
 class TokenRefreshRequest(BaseModel):
+    model_config = MY_CONFIG
+
     refresh_token: str
 
 
 class TokenRefreshResponse(BaseModel):
+    model_config = MY_CONFIG
+
     access_token: str
     token_type: str
 
@@ -216,6 +232,8 @@ class TokenRefreshResponse(BaseModel):
 
 
 class TokenVerificationResponse(BaseModel):
+    model_config = MY_CONFIG
+
     valid: bool
     message: str
 
@@ -226,10 +244,14 @@ class TokenVerificationResponse(BaseModel):
 
 
 class SendVerificationCodeRequest(BaseModel):
+    model_config = MY_CONFIG
+
     phone_number: str
 
 
 class VerifyCodeRequest(BaseModel):
+    model_config = MY_CONFIG
+
     phone_number: str
     code: str
 
@@ -240,6 +262,8 @@ class VerifyCodeRequest(BaseModel):
 
 
 class VerifyBusinessRegistrationRequest(BaseModel):
+    model_config = MY_CONFIG
+
     b_no: str  # 사업자등록번호
     p_nm: str  # 대표자 이름
     start_dt: str  # 개업일자

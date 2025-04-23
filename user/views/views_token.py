@@ -22,12 +22,14 @@ def create_access_token(user):
 
     expiration = datetime.now() + timedelta(minutes=expire_minutes)
     payload = {
-        "sub": str(user.id),  # common_user_id
+        "sub": str(user.common_user_id),  # common_user_id
         "join_type": user.join_type,
         "is_active": user.is_active,
         "exp": expiration,
     }
-    return jwt.encode(payload, settings.SECRET_KEY, settings.JWT_ALGORITHM)
+    return jwt.encode(
+        payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
 
 
 def create_refresh_token(user):
@@ -35,18 +37,20 @@ def create_refresh_token(user):
     expire_days = settings.REFRESH_TOKEN_EXPIRE_DAYS
     expiration = datetime.now() + timedelta(days=expire_days)
     payload = {
-        "sub": str(user.id),
+        "sub": str(user.common_user_id),
         "join_type": user.join_type,
         "is_active": user.is_active,
         "exp": expiration,
     }
-    return jwt.encode(payload, settings.SECRET_KEY, settings.JWT_ALGORITHM)
+    return jwt.encode(
+        payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
 
 
 class TokenRefreshService:
     def __init__(self, refresh_token: str):
         self.refresh_token = refresh_token
-        self.secret_key = settings.SECRET_KEY
+        self.secret_key = settings.JWT_SECRET_KEY
         self.algorithm = settings.JWT_ALGORITHM
 
     def refresh(self) -> Dict[str, Any]:
@@ -98,7 +102,15 @@ class TokenRefreshService:
                     "message": "Invalid refresh token.",
                     "status_code": 400,
                 }
-
+            except Exception as e:
+                print(
+                    f"Error decoding refresh token: {str(e)}"
+                )  # 또는 로깅 라이브러리 사용
+                return {
+                    "success": False,
+                    "message": f"Error decoding refresh token: {str(e)}",
+                    "status_code": 400,
+                }
                 # 새로운 Access Token 발급
             new_access_token = create_access_token(user)
 
@@ -109,9 +121,12 @@ class TokenRefreshService:
                 "status_code": 200,
             }
         except Exception as e:
+            print(
+                f"Error in refresh service: {str(e)}"
+            )  # 또는 로깅 라이브러리 사용
             return {
                 "success": False,
-                "message": f"Server error: {str(e)}",
+                "message": f"Server error during refresh: {str(e)}",
                 "status_code": 500,
             }
 
