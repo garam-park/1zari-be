@@ -8,12 +8,16 @@ from user.models import CommonUser, CompanyInfo, UserInfo
 @pytest.mark.django_db
 def test_common_user_creation():
     user = CommonUser.objects.create(
-        email="test@example.com", password="hashed_pw", join_type="user"
+        email="test@example.com",
+        password="hashed_pw",
+        join_type="user",
+        is_active=True,
     )
     assert user.email == "test@example.com"
     assert user.join_type == "user"
     assert user.created_at is not None
     assert user.last_login is None
+    assert user.is_active is True
 
 
 @pytest.mark.django_db
@@ -30,12 +34,9 @@ def test_user_info_creation():
         interest=["사무", "서비스"],
         purpose_subscription=["일자리", "재취업"],
         route=["네이버", "지인"],
-        wish_work_place="서울",
-        is_active=True,
     )
     assert profile.name == "홍길동"
     assert profile.phone_number == "01012345678"
-    assert profile.is_active is True
 
 
 @pytest.mark.django_db
@@ -59,4 +60,3 @@ def test_company_info_creation():
     assert company.company_name == "테스트주식회사"
     assert company.manager_email == "manager@example.com"
     assert company.ceo_name == "대표"
-    assert not company.is_active
