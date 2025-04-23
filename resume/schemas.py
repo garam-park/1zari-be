@@ -2,9 +2,9 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
-from job_posting.schemas import JobPostingBaseModel, JobPostingListModel
+from job_posting.schemas import  JobPostingListModel
 from user.models import UserInfo
 from user.schemas import UserInfoModel
 from utils.schemas import MY_CONFIG
@@ -87,7 +87,7 @@ class ResumeOutputModel(BaseModel):
     school_name: str
     education_state: str
     introduce: str
-    user: UserInfo
+    user: UserInfoModel
     career_list: Optional[List[CareerInfoModel]]
     certification_list: Optional[List[CertificationInfoModel]]
 
