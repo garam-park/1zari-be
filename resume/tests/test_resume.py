@@ -4,11 +4,9 @@ from gc import get_objects
 import pytest
 from django.http.response import Http404
 from django.shortcuts import get_object_or_404
-from django.test.client import Client, RequestFactory
-from django.urls.base import reverse
+from django.test.client import Client
 
 from resume.models import CareerInfo, Certification, Resume
-from resume.views.resume_views import MyResumeListView
 from user.models import CommonUser, UserInfo
 
 
@@ -39,13 +37,9 @@ def mock_user(db, mock_common_user):
 
 
 @pytest.fixture
-def resume_data(db, mock_user, mock_common_user):
-    resume = Resume.objects.create()
-
-
-@pytest.fixture
-def factory():
-    return RequestFactory()
+def client():
+    """Django 테스트 Client 객체 생성"""
+    return Client()
 
 
 @pytest.mark.django_db
@@ -73,12 +67,6 @@ def test_my_resume_list_view_get(client, mock_user, mock_common_user):
     data = json.loads(response.content)
     assert "resume_list" in data
     assert len(data["resume_list"]) >= 1
-
-
-@pytest.fixture
-def client():
-    """Django 테스트 Client 객체 생성"""
-    return Client()
 
 
 @pytest.mark.django_db

@@ -1,8 +1,6 @@
-# ------------------------
-# serializer (추후 분리 예정)
-# ------------------------
 from typing import List
 
+from job_posting.models import JobPostingBookmark
 from resume.models import CareerInfo, Certification, Submission
 from resume.schemas import (
     CareerInfoModel,
@@ -42,8 +40,21 @@ def serialize_submissions(
 ) -> list[SubmissionModel]:
     result = []
     for submission in submissions:
-        job_posting = JobpostingListOutputModel.model_validate(
-            submission.job_posting
+        is_bookmarked = (
+            True
+            if JobPostingBookmark.objects.filter(
+                job_posting=submission.job_posting
+            ).exists()
+            else False
+        )
+        job_posting = JobpostingListOutputModel(
+            job_posting_id=submission.job_posting.job_posting_id,
+            job_posting_title=submission.job_posting.job_posting_title,
+            company_name=submission.job_posting.company_id.company_name,
+            company_address=submission.job_posting.company_id.company_address,
+            summary=submission.job_posting.summary,
+            deadline=submission.job_posting.deadline,
+            is_bookmarked=is_bookmarked,
         )
         result.append(
             SubmissionModel(
@@ -52,7 +63,7 @@ def serialize_submissions(
                 snapshot_resume=submission.snapshot_resume,
                 memo=submission.memo or "",
                 is_read=submission.is_read,
-                created_at=submission.created_at,
+                created_at=submission.created_at.date(),
             )
         )
     return result
