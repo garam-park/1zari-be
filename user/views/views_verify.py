@@ -15,71 +15,81 @@ from user.schemas import (
     VerifyCodeRequest,
 )
 
-# 문자보내기 api찾을때까지 주석처리
-# class SendVerificationCodeView(View):
-#     # 인증코드 생성, 발송/ ncp 프로젝트 생성이 안되서 임시
-#     # https://api.ncloud-docs.com/docs/ai-application-service-sens-smsv2
-#     def post(self, request, *args, **kwargs):
-#
-#         try:
-#             body = json.loads(request.body.decode())
-#             request_data = SendVerificationCodeRequest(**body)
-#
-#             phone_number = request_data.phone_number
-#
-#             if not phone_number:
-#                 return JsonResponse(
-#                     {"message": "전화번호가 없습니다."}, status=400
-#                 )
-#
-#             # 인증번호 생성
-#             verification_code = "".join(random.choices(string.digits, k=6))
-#             r.setex(f"verify:{phone_number}", 300, verification_code)
-#
-#             # SMS API 요청
-#             url = f"https://sens.apigw.ntruss.com/sms/v2/services/{settings.serviceId}/messages"
-#             headers = {
-#                 "Content-Type": "application/json; charset=utf-8",
-#                 "x-ncp-apigw-timestamp": "{Timestamp}",
-#                 "x-ncp-iam-access-key": settings.SubAccountAccessKey,
-#                 "x-ncp-apigw-signature-v2": settings.APIGatewaySignature,
-#             }
-#             data = {
-#                 "type": "SMS",
-#                 "countryCode": "82",
-#                 "contentType": "COMM",
-#                 "from": settings.SENDER_PHONE_NUMBER,
-#                 "content": f"[인증번호] {verification_code}를 입력해주세요.",
-#                 "messages": [
-#                     {
-#                         "to": phone_number,
-#                         "content": f"[인증번호] {verification_code}를 입력해주세요.",
-#                     }
-#                 ],
-#             }
-#
-#             response = requests.post(
-#                 url, headers=headers, data=json.dumps(data)
-#             )
-#             result = response.json()
-#
-#             if result.get("resultCode") != "0000":
-#                 return JsonResponse(
-#                     {"message": "문자 전송 실패", "response": result},
-#                     status=400,
-#                 )
-#
-#             return JsonResponse({"message": "인증번호 전송 성공"}, status=200)
-#
-#         except ValidationError as e:
-#             return JsonResponse(
-#                 {"message": "Invalid request data", "errors": e.errors()},
-#                 status=400,
-#             )
-#         except Exception as e:
-#             return JsonResponse(
-#                 {"message": "서버 오류", "error": str(e)}, status=500
-#             )
+
+class SendVerificationCodeView(View):
+    # 인증코드 생성, 발송/ ncp 프로젝트 생성이 안되서 임시
+    def post(self, request, *args, **kwargs):
+
+        try:
+            body = json.loads(request.body.decode())
+            request_data = SendVerificationCodeRequest(**body)
+
+            phone_number = request_data.phone_number
+
+            if not phone_number:
+                return JsonResponse(
+                    {"message": "전화번호가 없습니다."}, status=400
+                )
+
+            # 인증번호 생성
+            verification_code = "".join(random.choices(string.digits, k=6))
+            r.setex(f"verify:{phone_number}", 300, verification_code)
+
+            # SMS API 요청
+            # 알리고 API 요청 URL
+            url = "https://apis.aligo.in/send/"
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            }
+
+            # 요청에 필요한 데이터 설정
+            data = {
+                "api_key": settings.aligo_api_key,
+                "user_id": settings.aligo_user_id,
+                "sender": settings.aligo_sender,
+                "receiver": phone_number,
+                "msg": f"[인증번호] {verification_code}를 입력해주세요.",
+                "title": "인증번호 발송",
+            }
+
+            try:
+                response = requests.post(
+                    url, headers=headers, data=data
+                )
+                response.raise_for_status()  # HTTPError 발생 시 처리
+                result = response.json()
+
+                if result.get("result_code") != 1:
+                    return JsonResponse(
+                        {"message": "문자 전송 실패", "response": result},
+                        status=400,
+                    )
+            except requests.exceptions.Timeout as e:
+                return JsonResponse(
+                    {"message": "API 요청 시간 초과", "error": str(e)},
+                    status=500,
+                )
+            except requests.exceptions.HTTPError as e:
+                return JsonResponse(
+                    {"message": "HTTP 오류", "error": str(e)},
+                    status=500,
+                )
+            except requests.exceptions.RequestException as e:
+                return JsonResponse(
+                    {"message": "알고 API 요청 오류", "error": str(e)},
+                    status=500,
+                )
+            return JsonResponse({"message": "인증번호 전송 성공"}, status=200)
+
+        except ValidationError as e:
+            return JsonResponse(
+                {"message": "Invalid request data", "errors": e.errors()},
+                status=400,
+            )
+        except Exception as e:
+            return JsonResponse(
+                {"message": "서버 오류", "error": str(e)}, status=500
+            )
 
 
 class VerifyCodeView(View):
@@ -103,7 +113,6 @@ class VerifyCodeView(View):
                     {"message": "인증 코드가 일치하지 않습니다."}, status=400
                 )
 
-            # 인증 성공 시 Redis에서 삭제 (선택 사항)
             r.delete(f"verify:{phone_number}")
 
             return JsonResponse({"message": "인증 성공!"}, status=200)

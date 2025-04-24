@@ -20,14 +20,15 @@ class CommonUserBaseModel(BaseModel):
 
 
 class CommonUserResponseModel(BaseModel):
+    model_config = MY_CONFIG
+
     common_user_id: UUID
     email: EmailStr
     join_type: str
     last_login: Optional[str] = None  # 로그인 시간도 예시로 추가
     is_active: bool = False
 
-    class Config:
-        orm_mode = True
+
 
 
 # ------------------------
@@ -267,3 +268,37 @@ class VerifyBusinessRegistrationRequest(BaseModel):
     b_no: str  # 사업자등록번호
     p_nm: str  # 대표자 이름
     start_dt: str  # 개업일자
+
+
+# 카카오 로그인 요청 모델
+class KakaoLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    code: str  # 카카오로부터 받은 인증 코드
+
+
+# 카카오 로그인 응답 모델
+class KakaoLoginResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+# 네이버 로그인 요청 모델
+class NaverLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    code: str  # 네이버로부터 받은 인증 코드
+    state: str  # 인증 요청 시 사용한 state 값
+
+
+# 네이버 로그인 응답 모델
+class NaverLoginResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    access_token: str
+    refresh_token: str
+    token_type: str

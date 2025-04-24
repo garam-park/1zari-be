@@ -177,3 +177,7 @@ NAVER_REDIRECT_URL = secrets["naver"]["redirect_url"]
 KAKAO_CLIENT_ID = secrets["kakao"]["client_id"]
 KAKAO_SECRET = secrets["kakao"]["secret"]
 KAKAO_REDIRECT_URL = secrets["kakao"]["redirect_url"]
+
+aligo_api_key = secrets["aligo"]["api_key"]
+aligo_user_id = secrets["aligo"]["user_id"]
+aligo_sender = secrets["aligo"]["sender"]

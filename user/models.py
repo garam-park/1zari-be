@@ -1,4 +1,6 @@
 import uuid
+import string
+import random
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -20,6 +22,12 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
+
+    def make_random_password(self, length=8):
+        """랜덤한 비밀번호를 생성하는 함수"""
+        characters = string.ascii_letters + string.digits + string.punctuation
+        random_password = ''.join(random.choice(characters) for i in range(length))
+        return random_password
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_superuser", True)
