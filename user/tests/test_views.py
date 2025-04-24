@@ -4,7 +4,10 @@ from datetime import datetime, timedelta
 import jwt
 import pytest
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
+from django.http import HttpResponse
 from django.test import Client
+from django.urls import reverse
 
 from user.models import CommonUser, CompanyInfo, UserInfo
 from user.views.views_token import create_refresh_token
@@ -33,6 +36,39 @@ def common_company_data():
         "join_type": "company",
         "is_active": True,
     }
+
+
+@pytest.fixture
+def user_info():
+    common_user = CommonUser.objects.create_user(
+        email="test@example.com", password="oldpassword"
+    )
+    return UserInfo.objects.create(
+        common_user=common_user,
+        name="테스트 사용자",
+        phone_number="01012345678",
+        gender="M",
+        birthday="1990-01-01",
+    )
+
+
+@pytest.fixture
+def company_info():
+    common_user = CommonUser.objects.create_user(
+        email="company@example.com", password="oldpassword"
+    )
+    return CompanyInfo.objects.create(
+        common_user=common_user,
+        company_name="테스트 회사",
+        establishment="2023-01-01",
+        company_address="테스트 주소",
+        business_registration_number="1234567890",
+        company_introduction="테스트 소개",
+        ceo_name="테스트 대표",
+        manager_name="테스트 담당자",
+        manager_phone_number="01087654321",
+        manager_email="company@example.com",
+    )
 
 
 @pytest.mark.django_db
@@ -158,3 +194,148 @@ def test_logout_view(client, common_user_data):
 
     assert response.status_code == 200
     assert response.json()["message"] == "로그아웃 성공"
+
+
+@pytest.mark.django_db
+def test_find_user_email(client, user_info):
+    """일반 유저 이메일 찾기 테스트 (성공/실패)"""
+
+    # 성공
+    url = reverse("user:find-user-email")
+    data = {"phone_number": user_info.phone_number}
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 200  # OK
+    assert response.json()["email"] == user_info.common_user.email
+
+    # 실패
+    data = {"phone_number": "01099998888"}
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 404  # Not Found
+
+
+@pytest.mark.django_db
+def test_reset_user_password(client, user_info):
+    """일반 유저 비밀번호 재설정 테스트 (성공/실패/이메일 불일치)"""
+
+    # 성공
+    url = reverse("user:reset-user-password")
+    new_password = "newsecurepassword"
+    data = {
+        "email": user_info.common_user.email,
+        "phone_number": user_info.phone_number,
+        "new_password": new_password,
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 200  # OK
+    user_info.common_user.refresh_from_db()
+    assert check_password(new_password, user_info.common_user.password)
+
+    # 실패 (사용자 없음)
+    data = {
+        "email": "test@example.com",
+        "phone_number": "01099998888",
+        "new_password": "newpassword",
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 404  # Not Found
+
+    # 실패 (이메일 불일치)
+    data = {
+        "email": "wrong@example.com",
+        "phone_number": user_info.phone_number,
+        "new_password": "newpassword",
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 400  # Bad Request
+
+
+@pytest.mark.django_db
+def test_find_company_email(client, company_info):
+    """사업자 이메일 찾기 테스트 (성공/실패/사업자등록번호 불일치)"""
+
+    # 성공
+    url = reverse("user:find-company-email")
+    data = {
+        "phone_number": company_info.manager_phone_number,
+        "business_registration_number": company_info.business_registration_number,
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 200  # OK
+    assert response.json()["email"] == company_info.manager_email
+
+    # 실패 (사업자 없음)
+    data = {
+        "phone_number": "01099998888",
+        "business_registration_number": "1234567890",
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 404  # Not Found
+
+    # 실패 (사업자등록번호 불일치)
+    data = {
+        "phone_number": company_info.manager_phone_number,
+        "business_registration_number": "9999999999",
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 400  # Bad Request
+
+
+@pytest.mark.django_db
+def test_reset_company_password(client, company_info):
+    """사업자 비밀번호 재설정 테스트 (성공/실패/사업자등록번호 불일치/이메일 불일치)"""
+
+    # 성공
+    url = reverse("user:reset-company-password")
+    new_password = "newsecurepassword"
+    data = {
+        "email": company_info.manager_email,
+        "phone_number": company_info.manager_phone_number,
+        "business_registration_number": company_info.business_registration_number,
+        "new_password": new_password,
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 200  # OK
+    company_info.common_user.refresh_from_db()
+    assert check_password(new_password, company_info.common_user.password)
+
+    # 실패 (사업자 없음)
+    data = {
+        "email": "company@example.com",
+        "phone_number": "01099998888",
+        "business_registration_number": "1234567890",
+        "new_password": "newpassword",
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 404  # Not Found
+
+    # 실패 (사업자등록번호 불일치)
+    data = {
+        "email": company_info.manager_email,
+        "phone_number": company_info.manager_phone_number,
+        "business_registration_number": "9999999999",
+        "new_password": "newpassword",
+    }
+    response = client.post(
+        url, json.dumps(data), content_type="application/json"
+    )
+    assert response.status_code == 400  # Bad Request

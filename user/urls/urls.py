@@ -7,6 +7,10 @@ from user.views.views import (
     LogoutView,
     UserLoginView,
     UserSignupView,
+    find_company_email,
+    find_user_email,
+    reset_company_password,
+    reset_user_password,
 )
 from user.views.views_oauth import KakaoLoginView, NaverLoginView
 from user.views.views_token import TokenRefreshView
@@ -44,4 +48,12 @@ urlpatterns = [
     ),
     path("kakao/login/", KakaoLoginView.as_view(), name="kakao-login"),
     path("naver/login/", NaverLoginView.as_view(), name="naver-login"),
+    path("find//email/", find_user_email, name="find-user-email"),
+    path("find/company/email/", find_company_email, name="find-company-email"),
+    path("reset/password/", reset_user_password, name="reset-user-password"),
+    path(
+        "reset/company/password/",
+        reset_company_password,
+        name="reset-company-password",
+    ),
 ]

@@ -160,7 +160,7 @@ class CompanyJoinResponseModel(BaseModel):
 
 
 # ------------------------
-# 로그인 모델
+# 로그인 요청 모델
 # ------------------------
 
 
@@ -176,6 +176,11 @@ class CompanyLoginRequest(BaseModel):
 
     email: EmailStr
     password: str
+
+
+# ------------------------
+# 로그인 응답 모델
+# ------------------------
 
 
 class UserLoginResponse(BaseModel):
@@ -268,14 +273,29 @@ class VerifyBusinessRegistrationRequest(BaseModel):
     start_dt: str  # 개업일자
 
 
-# 카카오 로그인 요청 모델
+# ------------------------
+# oauth 요청 모델
+# ------------------------
+
+
 class KakaoLoginRequest(BaseModel):
     model_config = MY_CONFIG
 
-    code: str  # 카카오로부터 받은 인증 코드
+    code: str
 
 
-# 카카오 로그인 응답 모델
+class NaverLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    code: str
+    state: str
+
+
+# ------------------------
+# oauth 응답 모델
+# ------------------------
+
+
 class KakaoLoginResponse(BaseModel):
     model_config = MY_CONFIG
 
@@ -285,15 +305,6 @@ class KakaoLoginResponse(BaseModel):
     token_type: str
 
 
-# 네이버 로그인 요청 모델
-class NaverLoginRequest(BaseModel):
-    model_config = MY_CONFIG
-
-    code: str  # 네이버로부터 받은 인증 코드
-    state: str  # 인증 요청 시 사용한 state 값
-
-
-# 네이버 로그인 응답 모델
 class NaverLoginResponse(BaseModel):
     model_config = MY_CONFIG
 
@@ -301,3 +312,73 @@ class NaverLoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+
+
+# ------------------------
+# 이메일, 비밀번호 찾기 요청 모델
+# ------------------------
+
+
+class FindUserEmailRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    phone_number: str
+
+
+class ResetUserPasswordRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    email: EmailStr
+    phone_number: str
+    new_password: str
+
+
+class FindCompanyEmailRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    phone_number: str
+    business_registration_number: str
+
+
+class ResetCompanyPasswordRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    email: EmailStr
+    phone_number: str
+    business_registration_number: str
+    new_password: str
+
+
+# ------------------------
+# 이메일, 비밀번호 찾기 응답 모델
+# ------------------------
+
+
+class FindUserEmailResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    email: str
+    message: Optional[str] = None  # 성공 메시지
+    errors: Optional[List[str]] = None  # 오류 메시지
+
+
+class ResetUserPasswordResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    errors: Optional[List[str]] = None
+
+
+class FindCompanyEmailResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    email: str
+    message: Optional[str] = None
+    errors: Optional[List[str]] = None
+
+
+class ResetCompanyPasswordResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    errors: Optional[List[str]] = None

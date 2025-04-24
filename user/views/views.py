@@ -20,7 +20,15 @@ from user.schemas import (
     CompanyLoginRequest,
     CompanyLoginResponse,
     CompanySignupRequest,
+    FindCompanyEmailRequest,
+    FindCompanyEmailResponse,
+    FindUserEmailRequest,
+    FindUserEmailResponse,
     LogoutRequest,
+    ResetCompanyPasswordRequest,
+    ResetCompanyPasswordResponse,
+    ResetUserPasswordRequest,
+    ResetUserPasswordResponse,
     UserInfoModel,
     UserJoinResponseModel,
     UserLoginRequest,
@@ -128,7 +136,6 @@ class UserSignupView(View):
             return JsonResponse(response.model_dump(), status=201)
 
         except ValidationError as e:
-            print(e.errors())  # 에러 로그 출력
             return JsonResponse(
                 {"message": "잘못된 입력", "errors": e.errors()}, status=422
             )
@@ -306,3 +313,180 @@ class LogoutView(View):
             return JsonResponse(
                 {"message": "서버 오류", "error": str(e)}, status=500
             )
+
+
+# 일반 유저 이메일 찾기
+def find_user_email(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = FindUserEmailRequest(**body)
+        phone_number = request_data.phone_number
+        user_info = UserInfo.objects.get(phone_number=phone_number)
+        common_user = user_info.common_user
+
+        response_data = FindUserEmailResponse(email=common_user.email)
+        return JsonResponse(response_data.model_dump())
+    except UserInfo.DoesNotExist:
+        return JsonResponse(
+            {"message": "해당 전화번호로 가입된 사용자가 없습니다."}, status=404
+        )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
+
+
+# 일반 유저 비밀번호 재설정
+def reset_user_password(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = ResetUserPasswordRequest(**body)
+        email = request_data.email
+        phone_number = request_data.phone_number
+        new_password = request_data.new_password
+
+        try:
+            # 이메일과 전화번호로 유저 정보 조회
+            user_info = UserInfo.objects.get(phone_number=phone_number)
+            common_user = user_info.common_user
+
+            # 이메일이 일치하는지 확인
+            if common_user.email != email:
+                return JsonResponse(
+                    {
+                        "message": "입력한 이메일과 전화번호가 일치하지 않습니다."
+                    },
+                    status=400,
+                )
+
+            # 새 비밀번호 해싱 후 저장
+            common_user.password = make_password(new_password)
+            common_user.save()
+
+            response_data = ResetUserPasswordResponse(message="비밀번호 재설정 완료")
+            return JsonResponse(response_data.model_dump())
+
+        except UserInfo.DoesNotExist:
+            return JsonResponse(
+                {"message": "해당 전화번호로 가입된 사용자가 없습니다."},
+                status=404,
+            )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
+
+
+# 사업자 이메일 찾기
+def find_company_email(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = FindCompanyEmailRequest(**body)
+        phone_number = request_data.phone_number
+        business_registration_number = request_data.business_registration_number
+
+        try:
+            # 전화번호, 사업자등록번호로 사업자 정보 조회
+            company_info = CompanyInfo.objects.get(
+                manager_phone_number=phone_number
+            )
+
+            # 사업자등록번호가 일치하는지 확인
+            if (
+                company_info.business_registration_number
+                != business_registration_number
+            ):
+                return JsonResponse(
+                    {"message": "입력한 사업자등록번호가 일치하지 않습니다."},
+                    status=400,
+                )
+
+            # 사업자 이메일 반환
+            response_data = FindCompanyEmailResponse(email=company_info.manager_email)
+            return JsonResponse(response_data.model_dump())
+
+        except CompanyInfo.DoesNotExist:
+            return JsonResponse(
+                {"message": "해당 정보로 가입된 사업자가 없습니다."}, status=404
+            )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
+
+
+# 사업자 비밀번호 재설정
+def reset_company_password(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = ResetCompanyPasswordRequest(**body)
+        email = request_data.email
+        phone_number = request_data.phone_number
+        business_registration_number = request_data.business_registration_number
+        new_password = request_data.new_password
+
+        try:
+            # 사업자등록번호, 이메일, 전화번호로 유저 정보 조회
+            company_info = CompanyInfo.objects.get(
+                manager_email=email, manager_phone_number=phone_number
+            )
+
+            # 사업자등록번호가 일치하는지 확인
+            if (
+                company_info.business_registration_number
+                != business_registration_number
+            ):
+                return JsonResponse(
+                    {"message": "입력한 사업자등록번호가 일치하지 않습니다."},
+                    status=400,
+                )
+
+            # 이메일이 일치하는지 확인
+            common_user = company_info.common_user
+            if common_user.email != email:
+                return JsonResponse(
+                    {
+                        "message": "입력한 이메일과 전화번호가 일치하지 않습니다."
+                    },
+                    status=400,
+                )
+
+            # 새 비밀번호 해싱 후 저장
+            common_user.password = make_password(new_password)
+            common_user.save()
+
+            response_data = ResetCompanyPasswordResponse(message="비밀번호 재설정 완료")
+            return JsonResponse(response_data.model_dump())
+
+        except CompanyInfo.DoesNotExist:
+            return JsonResponse(
+                {"message": "해당 정보로 가입된 사업자가 없습니다."}, status=404
+            )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
