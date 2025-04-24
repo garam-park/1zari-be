@@ -53,9 +53,7 @@ class SendVerificationCodeView(View):
             }
 
             try:
-                response = requests.post(
-                    url, headers=headers, data=data
-                )
+                response = requests.post(url, headers=headers, data=data)
                 response.raise_for_status()  # HTTPError 발생 시 처리
                 result = response.json()
 

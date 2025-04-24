@@ -29,8 +29,6 @@ class CommonUserResponseModel(BaseModel):
     is_active: bool = False
 
 
-
-
 # ------------------------
 # 일반 유저 가입 요청 모델
 # ------------------------
@@ -285,6 +283,7 @@ class KakaoLoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+
 
 # 네이버 로그인 요청 모델
 class NaverLoginRequest(BaseModel):
