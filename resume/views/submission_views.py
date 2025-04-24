@@ -11,8 +11,12 @@ from resume.models import Resume, Submission
 from resume.schemas import (
     CareerInfoModel,
     CertificationInfoModel,
+    JobpostingGetListModel,
     JobpostingListOutputModel,
     ResumeOutputModel,
+    SnapshotResumeModel,
+    SubmissionCompanyGetListInfoModel,
+    SubmissionCompanyGetListOutputModel,
     SubmissionDetailResponseModel,
     SubmissionListResponseModel,
     SubmissionMemoUpdateModel,
@@ -25,7 +29,7 @@ from resume.serializer import (
 )
 from user.models import UserInfo
 from user.schemas import UserInfoModel
-from utils.common import get_vaild_nomal_user
+from utils.common import get_valid_company_user, get_valid_nomal_user
 
 # ------------------------
 # 지원 관련 api
@@ -43,7 +47,7 @@ class SubmissionListView(View):
         """
         try:
             token = request.user
-            user = get_vaild_nomal_user(token)
+            user = get_valid_nomal_user(token)
             submissions: list[Submission] = list(
                 Submission.objects.filter(user=user).all()
             )
@@ -65,7 +69,7 @@ class SubmissionListView(View):
         """
         try:
             token = request.user
-            user = get_vaild_nomal_user(token)
+            user = get_valid_nomal_user(token)
             data = json.loads(request.body)
             job_posting_id = data.get("job_posting_id")
             resume_id = data.get("resume_id")
@@ -93,7 +97,7 @@ class SubmissionListView(View):
             submission_model = SubmissionModel(
                 submission_id=submission.submission_id,
                 job_posting=job_posting_model,
-                snapshot_resume=ResumeOutputModel.model_validate(
+                snapshot_resume=SnapshotResumeModel.model_validate(
                     submission.snapshot_resume
                 ),
                 memo=submission.memo,
@@ -129,10 +133,10 @@ class SubmissionDetailView(View):
         """
         try:
             token = request.user
-            user = get_vaild_nomal_user(token)
+            user = get_valid_nomal_user(token)
 
             submission: Submission = Submission.objects.get(
-                submission_id=submission_id
+                user=user, submission_id=submission_id
             )
             if submission is None:
                 return JsonResponse(
@@ -149,34 +153,6 @@ class SubmissionDetailView(View):
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
-    def patch(
-        self, request: HttpRequest, submission_id: uuid.UUID
-    ) -> JsonResponse:
-        try:
-            token = request.user
-            user = get_vaild_nomal_user(token)
-            data = json.loads(request.body)
-            update_data = SubmissionMemoUpdateModel(memo=data.get("memo", ""))
-
-            submission: Submission = Submission.objects.get(
-                submission_id=submission_id
-            )
-            if submission is None:
-                return JsonResponse(
-                    {"errors": "Not found submission data"}, status=404
-                )
-            submission.memo = update_data.memo
-            submission.save()
-            submission_model = SubmissionModel.model_validate(submission)
-
-            response = SubmissionDetailResponseModel(
-                message="Successfully updated memo", submission=submission_model
-            )
-            return JsonResponse(response.model_dump(), status=200)
-
-        except Exception as e:
-            return JsonResponse({"errors": str(e)}, status=400)
-
     def delete(
         self, request: HttpRequest, submission_id: uuid.UUID
     ) -> JsonResponse:
@@ -185,7 +161,7 @@ class SubmissionDetailView(View):
         """
         try:
             token = request.user
-            user = get_vaild_nomal_user(token)
+            user = get_valid_nomal_user(token)
             submission: Submission = Submission.objects.get(
                 submission_id=submission_id
             )
@@ -197,6 +173,85 @@ class SubmissionDetailView(View):
             return JsonResponse(
                 {"message": "Successfully data deleted"}, status=200
             )
+        except Exception as e:
+            return JsonResponse({"errors": str(e)}, status=400)
+
+
+class SubmissionMemoView(View):
+    """
+    memo update 및 delete 뷰
+    """
+
+    def patch(
+        self, request: HttpRequest, submission_id: uuid.UUID
+    ) -> JsonResponse:
+        """
+        memo 수정
+        """
+        try:
+            token = request.user
+            user = get_valid_nomal_user(token)
+            data = json.loads(request.body)
+            update_data = SubmissionMemoUpdateModel(memo=data.get("memo", ""))
+
+            submission: Submission = Submission.objects.get(
+                submission_id=submission_id
+            )
+            if submission is None:
+                return JsonResponse(
+                    {"errors": "Not found submission data"}, status=404
+                )
+            if update_data:
+                submission.memo = update_data.memo
+                submission.save()
+            submission_model = SubmissionModel.model_validate(submission)
+
+            response = SubmissionDetailResponseModel(
+                message="Successfully updated memo", submission=submission_model
+            )
+            return JsonResponse(response.model_dump(), status=200)
+        except Exception as e:
+            return JsonResponse({"errors": str(e)}, status=400)
+
+
+class SubmissionCompanyListView(View):
+    """
+    기업 유저 지원 목록 조회
+    """
+
+    def get(self, request: HttpRequest) -> JsonResponse:
+        """
+        공고 제목 및 지원서 목록 리스트 조회
+        """
+        try:
+            token = request.user
+            user = get_valid_company_user(token)
+            submission_list = Submission.objects.filter(
+                job_posting__company_id=user.company_id
+            ).all()
+            job_posting_list_model: list[JobpostingGetListModel] = [
+                JobpostingGetListModel.model_validate(submission.job_posting)
+                for submission in submission_list
+            ]
+            submission_list_model: list[SubmissionCompanyGetListInfoModel] = [
+                SubmissionCompanyGetListInfoModel(
+                    submission_id=submission.submission_id,
+                    user_name=submission.user.name,
+                    summary=submission.job_posting.summary,
+                    is_read=submission.is_read,
+                    created_at=submission.created_at.date(),
+                    resume_title=submission.snapshot_resume["resume_title"],
+                )
+                for submission in submission_list
+            ]
+
+            response = SubmissionCompanyGetListOutputModel(
+                message="Successfully loaded submission_list",
+                job_posting_list=job_posting_list_model,
+                submission_list=submission_list_model,
+            )
+
+            return JsonResponse(response.model_dump(), status=200)
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
