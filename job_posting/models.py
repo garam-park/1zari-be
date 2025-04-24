@@ -16,11 +16,14 @@ class JobPosting(TimestampModel):
         primary_key=True, default=uuid.uuid4, editable=False
     )  # 공고글 ID
     job_posting_title = models.CharField(max_length=50)  # 공고글 제목
+    address = models.CharField(max_length=50)  # 근무지 주소
+    city = models.CharField(max_length=10)  # 시,도
+    district = models.CharField(max_length=10)  # 시,군,구
     location = models.PointField(
         verbose_name="근무지 좌표", srid=4326
     )  # 근무지 위치 x,y (위도,경도)
-    work_time_start = models.DateTimeField()  # 근무 시작 시간
-    work_time_end = models.DateTimeField()  # 근무 종료 시간
+    work_time_start = models.TimeField()  # 근무 시작 시간
+    work_time_end = models.TimeField()  # 근무 종료 시간
     posting_type = models.CharField(max_length=10)  # 고용 형태
     employment_type = models.CharField(max_length=10)  # 경력 여부
     job_keyword_main = models.CharField(max_length=20)  # 직종 대분류
@@ -35,7 +38,7 @@ class JobPosting(TimestampModel):
         verbose_name="매니저 ID",
     )  # 등록 매니저 ID
     education = models.CharField(max_length=20)  # 학력
-    deadline = models.DateTimeField()  # 지원 마감일
+    deadline = models.DateField()  # 지원 마감일
     time_discussion = models.BooleanField()  # 시간 협의 가능
     day_discussion = models.BooleanField()  # 요일 협의 가능
     work_day = ArrayField(
@@ -48,14 +51,6 @@ class JobPosting(TimestampModel):
 
     def __str__(self):
         return self.job_posting_title
-
-
-# job_posting/models.py 또는 별도 app/models.py
-
-from django.conf import settings
-from django.db import models  # type: ignore
-
-from utils.models import TimestampModel
 
 
 class JobPostingBookmark(TimestampModel):
