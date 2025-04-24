@@ -16,9 +16,9 @@ class JobPosting(TimestampModel):
         primary_key=True, default=uuid.uuid4, editable=False
     )  # 공고글 ID
     job_posting_title = models.CharField(max_length=50)  # 공고글 제목
-    address = models.CharField(max_length=50)  # 근무지 주소
-    city = models.CharField(max_length=10)  # 시,도
-    district = models.CharField(max_length=10)  # 시,군,구
+    address = models.CharField(max_length=50, default="기본주소") # 근무지주소
+    city = models.CharField(max_length=10, default="기본도시") # 시,도
+    district = models.CharField(max_length=10, default="기본구") # 시,군,구
     location = models.PointField(
         verbose_name="근무지 좌표", srid=4326
     )  # 근무지 위치 x,y (위도,경도)
