@@ -111,7 +111,7 @@ class Submission(TimestampModel):
     )
     snapshot_resume = models.JSONField(verbose_name="지원 시점 이력서 정보")
 
-    memo = models.CharField("지원공고 메모", max_length=50, blank=True)
+    memo = models.CharField("지원공고 메모", max_length=50, blank=True, null=True)
     is_read = models.BooleanField("기업 담당자 읽음 여부", default=False)
 
     objects = Manager()
