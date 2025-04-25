@@ -72,9 +72,8 @@ def test_my_resume_list_view_get(client, mock_user, mock_common_user):
 @pytest.mark.django_db
 def test_my_resume_list_view_post_success(client, mock_user, mock_common_user):
     """
-    MyResumeListView의 POST 메서드 성공 테스트 (새 이력서 등록)
+    이력서 등록
     """
-    # 실제 URLConf에 맞게 수정하세요!
     url = "/api/resume/"
 
     post_data = {
@@ -112,7 +111,6 @@ def test_my_resume_list_view_post_success(client, mock_user, mock_common_user):
         ],
     }
 
-    # 로그인: CommonUser를 인증 주체로 사용 (settings.AUTH_USER_MODEL이 CommonUser여야 함)
     client.force_login(mock_common_user)
 
     response = client.post(
@@ -122,16 +120,11 @@ def test_my_resume_list_view_post_success(client, mock_user, mock_common_user):
     print(response.status_code)
     print(response.content)
 
-    # 1. 응답 상태 코드
     assert response.status_code == 201
-
-    # 2. 응답 Content-Type
     assert response.get("content-type") == "application/json"
 
-    # 3. 응답 본문 파싱
     response_data = json.loads(response.content)
 
-    # 4. 응답 데이터 구조 및 내용 검증
     assert "message" in response_data
     assert response_data["message"] == "Resume created successfully"
     assert "resume" in response_data
@@ -141,7 +134,6 @@ def test_my_resume_list_view_post_success(client, mock_user, mock_common_user):
     assert created_resume["job_category"] == post_data["job_category"]
     assert created_resume["education_level"] == post_data["education_level"]
 
-    # 5. 경력/자격증 리스트 검증
     assert "career_list" in created_resume
     assert isinstance(created_resume["career_list"], list)
     assert len(created_resume["career_list"]) == len(post_data["career_list"])
@@ -156,7 +148,6 @@ def test_my_resume_list_view_post_success(client, mock_user, mock_common_user):
     if created_resume["certification_list"]:
         assert "certification_name" in created_resume["certification_list"][0]
 
-    # 6. DB에 실제로 저장되었는지 확인
     assert Resume.objects.filter(user=mock_user).count() == 1
     saved_resume = Resume.objects.get(user=mock_user)
     assert str(saved_resume.resume_id) == created_resume["resume_id"]

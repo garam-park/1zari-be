@@ -1,6 +1,4 @@
 import json
-import uuid
-from http.client import responses
 
 import pytest
 from django.contrib.gis.geos import Point
@@ -11,9 +9,9 @@ from job_posting.models import JobPosting
 from resume.models import CareerInfo, Certification, Resume, Submission
 from resume.schemas import CareerInfoModel, CertificationInfoModel
 from user.models import CommonUser, CompanyInfo, UserInfo
-from user.schemas import UserInfoModel
 
 
+# mock 일반 common_user 생성
 @pytest.fixture
 def mock_common_user(db):
     user = CommonUser.objects.create(
@@ -26,6 +24,7 @@ def mock_common_user(db):
     return user
 
 
+# mock 기업 common_user 생성
 @pytest.fixture
 def mock_common_company_user(db):
     user = CommonUser.objects.create(
@@ -38,6 +37,7 @@ def mock_common_company_user(db):
     return user
 
 
+# mock 일반 유저 생성
 @pytest.fixture
 def mock_user(db, mock_common_user):
     user_info = UserInfo.objects.create(
@@ -52,6 +52,7 @@ def mock_user(db, mock_common_user):
     return user_info
 
 
+# mock 기업 유저 생성
 @pytest.fixture
 def mock_company_user(db, mock_common_company_user):
     company_user = CompanyInfo.objects.create(
@@ -69,6 +70,7 @@ def mock_company_user(db, mock_common_company_user):
     return company_user
 
 
+# mock 공고 생성
 @pytest.fixture
 def mock_job_posting(db, mock_company_user):
     p = Point(127.0276, 37.4979)
@@ -99,6 +101,7 @@ def mock_job_posting(db, mock_company_user):
     return jon_posting
 
 
+# mock 이력서 생성
 @pytest.fixture
 def mock_resume(db, mock_user):
     return Resume.objects.create(
@@ -112,6 +115,7 @@ def mock_resume(db, mock_user):
     )
 
 
+# mock 경력 생성
 @pytest.fixture
 def mock_careers(db, mock_resume):
     careers = [
@@ -133,6 +137,7 @@ def mock_careers(db, mock_resume):
     return careers
 
 
+# mock 자격증 생성
 @pytest.fixture
 def mock_certifications(db, mock_resume):
     certifications = [
@@ -152,6 +157,7 @@ def mock_certifications(db, mock_resume):
     return certifications
 
 
+# mock 공고 지원 생성
 @pytest.fixture
 def mock_submission(
     db,
@@ -206,6 +212,9 @@ def test_submission_list_get_success(
     mock_job_posting,
     mock_submission,
 ):
+    """
+    일반 유저가 자신의 지원 목록 조회
+    """
 
     url = "/api/submission/"
     client.force_login(mock_common_user)
@@ -231,6 +240,9 @@ def test_submiison_company_get_list_success(
     mock_submission,
     mock_company_user,
 ):
+    """
+    기업 유저가 지원자 목록 조회
+    """
 
     url = "/api/submission/company/"
 
@@ -263,6 +275,9 @@ def test_update_memo_success(
     mock_job_posting,
     mock_common_user,
 ):
+    """
+    memo update 테스트
+    """
     new_memo = {"memo": "new_memo"}
     url = f"/api/submission/memo/{mock_submission.submission_id}/"
 
@@ -286,6 +301,9 @@ def test_delete_memo_success(
     mock_job_posting,
     mock_submission,
 ):
+    """
+    memo 삭제
+    """
     client.force_login(mock_common_user)
     url = f"/api/submission/memo/{mock_submission.submission_id}/"
 
@@ -321,7 +339,6 @@ def test_submission_create_success(
     response = client.post(url, post_data, content_type="application/json")
 
     response_data = json.loads(response.content)
-    print(response_data)
     assert response.status_code == 201
 
 
@@ -336,14 +353,15 @@ def test_submission_company_detail_get_success(
     mock_submission,
     mock_job_posting,
 ):
+    """
+    기업 유저가 지원자 이력서 상세 조회
+    """
     url = f"/api/submission/company/{mock_submission.submission_id}/"
 
     client.force_login(mock_common_company_user)
 
     response = client.get(url, content_type="application/json")
-    print(response.content)
     response_data = json.loads(response.content)["submission"]
-    print(response_data)
 
     assert response.status_code == 200
     assert response_data["name"] == mock_submission.user.name
@@ -354,4 +372,5 @@ def test_submission_company_detail_get_success(
     refreshed = Submission.objects.get(
         submission_id=mock_submission.submission_id
     )
+    # 기업 유저가 이력서 조회 했을 때 읽음 처리 확인
     assert refreshed.is_read is True
