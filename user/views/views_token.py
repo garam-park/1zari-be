@@ -66,7 +66,7 @@ class TokenRefreshService:
                     algorithms=[self.algorithm],
                 )
                 user_id = payload["sub"]
-                # 1. 블랙리스트 체크
+                # 블랙리스트 체크
                 if r.get(f"blacklist:refresh:{self.refresh_token}"):
                     return {
                         "success": False,
@@ -103,9 +103,6 @@ class TokenRefreshService:
                     "status_code": 400,
                 }
             except Exception as e:
-                print(
-                    f"Error decoding refresh token: {str(e)}"
-                )  # 또는 로깅 라이브러리 사용
                 return {
                     "success": False,
                     "message": f"Error decoding refresh token: {str(e)}",
@@ -121,9 +118,6 @@ class TokenRefreshService:
                 "status_code": 200,
             }
         except Exception as e:
-            print(
-                f"Error in refresh service: {str(e)}"
-            )  # 또는 로깅 라이브러리 사용
             return {
                 "success": False,
                 "message": f"Server error during refresh: {str(e)}",

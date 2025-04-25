@@ -1,3 +1,5 @@
+import random
+import string
 import uuid
 
 from django.contrib.auth.models import (
@@ -20,6 +22,14 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
+
+    def make_random_password(self, length=8):
+        """랜덤한 비밀번호를 생성하는 함수"""
+        characters = string.ascii_letters + string.digits + string.punctuation
+        random_password = "".join(
+            random.choice(characters) for i in range(length)
+        )
+        return random_password
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_superuser", True)
@@ -46,6 +56,9 @@ class CommonUser(AbstractBaseUser, PermissionsMixin, TimestampModel):
     last_login = models.DateTimeField(null=True, blank=True)
     # 활성 상태 여부
     is_active = models.BooleanField(default=False)
+    # 관리자 권한 여부
+    is_staff = models.BooleanField(default=False)
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
     objects = CustomUserManager()
@@ -129,9 +142,6 @@ class CompanyInfo(TimestampModel):
     manager_phone_number = models.CharField(max_length=30)
     # 담당자 이메일
     manager_email = models.EmailField(max_length=50)
-
-    # 관리자 권한 여부
-    is_staff = models.BooleanField(default=False)
 
     def __str__(self):
         return self.company_name

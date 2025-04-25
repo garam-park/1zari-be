@@ -6,7 +6,9 @@ import requests
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import make_password
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views import View
 from pydantic import ValidationError
 
@@ -16,17 +18,31 @@ from user.schemas import (
     CommonUserBaseModel,
     CommonUserResponseModel,
     CompanyInfoModel,
+    CompanyInfoResponse,
+    CompanyInfoUpdateRequest,
     CompanyJoinResponseModel,
     CompanyLoginRequest,
     CompanyLoginResponse,
     CompanySignupRequest,
+    FindCompanyEmailRequest,
+    FindCompanyEmailResponse,
+    FindUserEmailRequest,
+    FindUserEmailResponse,
     LogoutRequest,
+    LogoutResponse,
+    ResetCompanyPasswordRequest,
+    ResetCompanyPasswordResponse,
+    ResetUserPasswordRequest,
+    ResetUserPasswordResponse,
     UserInfoModel,
+    UserInfoResponse,
+    UserInfoUpdateRequest,
     UserJoinResponseModel,
     UserLoginRequest,
     UserLoginResponse,
     UserSignupRequest,
 )
+from utils.common import get_valid_company_user, get_valid_nomal_user
 
 from .views_token import create_access_token, create_refresh_token
 
@@ -128,7 +144,6 @@ class UserSignupView(View):
             return JsonResponse(response.model_dump(), status=201)
 
         except ValidationError as e:
-            print(e.errors())  # 에러 로그 출력
             return JsonResponse(
                 {"message": "잘못된 입력", "errors": e.errors()}, status=422
             )
@@ -265,6 +280,84 @@ class CompanyLoginView(View):
             )
 
 
+class UserInfoUpdateView(View):
+    def patch(self, request, *args, **kwargs):
+        try:
+            user_info = get_valid_nomal_user(request.user)
+
+            # URL에 있는 user_id와 인증된 유저 ID가 다르면 막기
+            if str(user_info.user_id) != str(request.user.id):
+                return JsonResponse({"message": "권한이 없습니다."}, status=403)
+
+            body = json.loads(request.body)
+            data = UserInfoUpdateRequest(**body)
+
+            for field, value in data.model_dump(exclude_unset=True).items():
+                setattr(user_info, field, value)
+            user_info.save()
+
+            response = UserInfoResponse(
+                message="회원 정보가 성공적으로 수정되었습니다.",
+                name=user_info.name,
+                phone_number=user_info.phone_number,
+                gender=user_info.gender,
+                birthday=user_info.birthday,
+                interest=user_info.interest,
+                purpose_subscription=user_info.purpose_subscription,
+                route=user_info.route,
+            )
+            return JsonResponse(response.model_dump(), status=200)
+
+        except PermissionDenied as e:
+            return JsonResponse({"message": str(e)}, status=403)
+        except Exception as e:
+            return JsonResponse(
+                {"message": "서버 오류가 발생했습니다.", "detail": str(e)},
+                status=500,
+            )
+
+
+class CompanyInfoUpdateView(View):
+    def patch(self, request, *args, **kwargs):
+        try:
+            token = request.user
+            company_user = get_valid_company_user(token)
+
+            if str(company_user.company_id) != str(request.company.id):
+                return JsonResponse({"message": "권한이 없습니다."}, status=403)
+
+            body = json.loads(request.body)
+            validated_data = CompanyInfoUpdateRequest(**body)
+
+            for field, value in validated_data.model_dump(
+                exclude_none=True
+            ).items():
+                setattr(company_user, field, value)
+
+            company_user.save()
+
+            response_data = CompanyInfoResponse(
+                message="회사 정보가 성공적으로 수정되었습니다.",
+                company_name=company_user.company_name,
+                establishment=company_user.establishment,
+                company_address=company_user.company_address,
+                business_registration_number=company_user.business_registration_number,
+                company_introduction=company_user.company_introduction,
+                ceo_name=company_user.ceo_name,
+                manager_name=company_user.manager_name,
+                manager_phone_number=company_user.manager_phone_number,
+                manager_email=company_user.manager_email,
+            )
+            return JsonResponse(response_data.model_dump(), status=200)
+
+        except PermissionDenied as e:
+            return JsonResponse({"message": str(e)}, status=403)
+        except ValidationError as e:
+            return JsonResponse({"message": str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({"message": f"오류 발생: {str(e)}"}, status=500)
+
+
 class LogoutView(View):
     def post(self, request, *args, **kwargs):
         try:
@@ -292,7 +385,9 @@ class LogoutView(View):
             # Redis에 블랙리스트 등록
             r.setex(f"blacklist:refresh:{refresh_token}", ttl, "true")
 
-            return JsonResponse({"message": "로그아웃 성공"}, status=200)
+            return JsonResponse(
+                LogoutResponse(message="로그아웃 성공").model_dump(), status=200
+            )
 
         except jwt.ExpiredSignatureError:
             return JsonResponse(
@@ -308,174 +403,220 @@ class LogoutView(View):
             )
 
 
-def create_dummy_password(common_user):
-    dummy_password = CommonUser.objects.make_random_password()
-    common_user.set_password(dummy_password)
-    common_user.save()
-    return dummy_password
+# 일반 유저 이메일 찾기
+def find_user_email(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = FindUserEmailRequest(**body)
+        phone_number = request_data.phone_number
+        user_info = UserInfo.objects.get(phone_number=phone_number)
+        common_user = user_info.common_user
+
+        response_data = FindUserEmailResponse(email=common_user.email)
+        return JsonResponse(response_data.model_dump())
+    except UserInfo.DoesNotExist:
+        return JsonResponse(
+            {"message": "해당 전화번호로 가입된 사용자가 없습니다."}, status=404
+        )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
 
 
-class KakaoLoginView(View):
-    def post(self, request, *args, **kwargs):
+# 일반 유저 비밀번호 재설정
+def reset_user_password(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = ResetUserPasswordRequest(**body)
+        email = request_data.email
+        phone_number = request_data.phone_number
+        new_password = request_data.new_password
+
         try:
-            body = json.loads(request.body.decode())
-            authorization_code = body.get("authorization_code")
+            # 이메일과 전화번호로 유저 정보 조회
+            user_info = UserInfo.objects.get(phone_number=phone_number)
+            common_user = user_info.common_user
 
-            if not authorization_code:
+            # 이메일이 일치하는지 확인
+            if common_user.email != email:
                 return JsonResponse(
-                    {"message": "authorization_code가 필요합니다."}, status=400
+                    {
+                        "message": "입력한 이메일과 전화번호가 일치하지 않습니다."
+                    },
+                    status=400,
                 )
 
-            # 카카오 토큰 발급 API 호출
-            kakao_token_url = "https://kauth.kakao.com/oauth/token"
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
-            }
-            data = {
-                "grant_type": "authorization_code",
-                "client_id": settings.KAKAO_CLIENT_ID,
-                "client_secret": settings.KAKAO_SECRET,
-                "redirect_uri": settings.KAKAO_REDIRECT_URL,
-                "code": authorization_code,
-            }
+            # 새 비밀번호 해싱 후 저장
+            common_user.password = make_password(new_password)
+            common_user.save()
 
-            response = requests.post(
-                kakao_token_url, headers=headers, data=data
+            response_data = ResetUserPasswordResponse(
+                message="비밀번호 재설정 완료"
             )
-            if response.status_code != 200:
-                return JsonResponse({"message": "카카오 인증 실패"}, status=400)
+            return JsonResponse(response_data.model_dump())
 
-            # access_token 받은 후
-            access_token = response.json().get("access_token")
+        except UserInfo.DoesNotExist:
+            return JsonResponse(
+                {"message": "해당 전화번호로 가입된 사용자가 없습니다."},
+                status=404,
+            )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
 
-            # 사용자 정보 요청
-            user_info_response = requests.post(
-                "https://kapi.kakao.com/v2/user/me",
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
-                },
+
+# 사업자 이메일 찾기
+def find_company_email(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = FindCompanyEmailRequest(**body)
+        phone_number = request_data.phone_number
+        business_registration_number = request_data.business_registration_number
+
+        try:
+            # 전화번호, 사업자등록번호로 사업자 정보 조회
+            company_info = CompanyInfo.objects.get(
+                manager_phone_number=phone_number
             )
 
-            if user_info_response.status_code != 200:
+            # 사업자등록번호가 일치하는지 확인
+            if (
+                company_info.business_registration_number
+                != business_registration_number
+            ):
                 return JsonResponse(
-                    {"message": "카카오 사용자 정보 요청 실패"}, status=400
+                    {"message": "입력한 사업자등록번호가 일치하지 않습니다."},
+                    status=400,
                 )
 
-            user_data = user_info_response.json()
-            email = user_data.get("kakao_account", {}).get("email")
+            # 사업자 이메일 반환
+            response_data = FindCompanyEmailResponse(
+                email=company_info.manager_email
+            )
+            return JsonResponse(response_data.model_dump())
 
-            # 이메일로 기존 사용자 찾기
-            common_user = CommonUser.objects.filter(email=email).first()
+        except CompanyInfo.DoesNotExist:
+            return JsonResponse(
+                {"message": "해당 정보로 가입된 사업자가 없습니다."}, status=404
+            )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
 
-            if not common_user:
-                # 새 사용자라면 CommonUser 생성
-                common_user = CommonUser.objects.create(
-                    email=email,
-                    join_type="user",
-                    is_active=True,
+
+# 사업자 비밀번호 재설정
+def reset_company_password(request):
+    try:
+        body = json.loads(request.body.decode())
+        request_data = ResetCompanyPasswordRequest(**body)
+        email = request_data.email
+        phone_number = request_data.phone_number
+        business_registration_number = request_data.business_registration_number
+        new_password = request_data.new_password
+
+        try:
+            # 사업자등록번호, 이메일, 전화번호로 유저 정보 조회
+            company_info = CompanyInfo.objects.get(
+                manager_email=email, manager_phone_number=phone_number
+            )
+
+            # 사업자등록번호가 일치하는지 확인
+            if (
+                company_info.business_registration_number
+                != business_registration_number
+            ):
+                return JsonResponse(
+                    {"message": "입력한 사업자등록번호가 일치하지 않습니다."},
+                    status=400,
                 )
-                dummy_password = create_dummy_password(common_user)
 
-            # JWT 토큰 발급 (common_user 사용)
-            access_token = create_access_token(common_user)
-            refresh_token = create_refresh_token(common_user)
+            # 이메일이 일치하는지 확인
+            common_user = company_info.common_user
+            if common_user.email != email:
+                return JsonResponse(
+                    {
+                        "message": "입력한 이메일과 전화번호가 일치하지 않습니다."
+                    },
+                    status=400,
+                )
 
-            response = {
-                "message": "로그인 성공",
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "token_type": "bearer",
-            }
+            # 새 비밀번호 해싱 후 저장
+            common_user.password = make_password(new_password)
+            common_user.save()
 
-            return JsonResponse(response, status=200)
+            response_data = ResetCompanyPasswordResponse(
+                message="비밀번호 재설정 완료"
+            )
+            return JsonResponse(response_data.model_dump())
 
+        except CompanyInfo.DoesNotExist:
+            return JsonResponse(
+                {"message": "해당 정보로 가입된 사업자가 없습니다."}, status=404
+            )
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "잘못된 요청 형식입니다."}, status=400)
+    except ValidationError as e:
+        return JsonResponse(
+            {
+                "message": "유효하지 않은 요청 데이터입니다.",
+                "errors": e.errors(),
+            },
+            status=400,
+        )
+
+
+class UserDeleteView(View):
+    def delete(self, request, *args, **kwargs):
+        try:
+            token = request.user  # 인증된 유저의 토큰 정보
+            if not token.is_authenticated:
+                raise PermissionDenied("Authentication is required.")
+
+            # 일반 유저 탈퇴 처리
+            if token.join_type == "nomal":
+                user_info = get_valid_nomal_user(token)
+                common_user = user_info.common_user
+                user_info.delete()
+                common_user.delete()
+
+            # 기업 유저 탈퇴 처리
+            elif token.join_type == "company":
+                company_info = get_valid_company_user(token)
+                common_user = company_info.common_user
+                company_info.delete()
+                common_user.delete()
+
+            else:
+                raise PermissionDenied("Invalid user type.")
+
+            return JsonResponse(
+                {"message": "회원 탈퇴가 완료되었습니다."}, status=200
+            )
+
+        except PermissionDenied as e:
+            return JsonResponse({"message": str(e)}, status=403)
         except Exception as e:
             return JsonResponse(
-                {"message": "서버 오류", "error": str(e)}, status=500
-            )
-
-
-class NaverLoginView(View):
-    def post(self, request, *args, **kwargs):
-        try:
-            body = json.loads(request.body.decode())
-            authorization_code = body.get("authorization_code")
-
-            if not authorization_code:
-                return JsonResponse(
-                    {"message": "authorization_code가 필요합니다."}, status=400
-                )
-
-            # 네이버에서 액세스 토큰을 발급받기 위한 URL과 파라미터
-            naver_token_url = "https://nid.naver.com/oauth2.0/token"
-
-            # 인가 코드를 사용해 액세스 토큰을 요청
-            token_data = {
-                "grant_type": "authorization_code",
-                "client_id": settings.NAVER_CLIENT_ID,
-                "client_secret": settings.NAVER_SECRET,
-                "code": authorization_code,
-                "redirect_uri": settings.NAVER_REDIRECT_URL,
-            }
-
-            token_response = requests.post(naver_token_url, data=token_data)
-            token_info = token_response.json()
-
-            access_token = token_info.get("access_token")
-
-            if not access_token:
-                return JsonResponse(
-                    {"message": "액세스 토큰 발급 실패"}, status=400
-                )
-
-            # 네이버 API 호출하여 사용자 정보 가져오기
-            naver_api_url = "https://openapi.naver.com/v1/nid/me"
-            headers = {"Authorization": f"Bearer {access_token}"}
-
-            user_response = requests.get(naver_api_url, headers=headers)
-            if user_response.status_code != 200:
-                return JsonResponse({"message": "네이버 인증 실패"}, status=400)
-
-            # 사용자 정보 요청
-            naver_api_url = "https://openapi.naver.com/v1/nid/me"
-            headers = {"Authorization": f"Bearer {access_token}"}
-
-            user_response = requests.get(naver_api_url, headers=headers)
-            if user_response.status_code != 200:
-                return JsonResponse(
-                    {"message": "네이버 사용자 정보 요청 실패"}, status=400
-                )
-            # 네이버 API에서 사용자 정보 추출
-            user_data = user_response.json()
-            email = user_data.get("response", {}).get("email")
-
-            # 이메일로 기존 사용자 찾기
-            common_user = CommonUser.objects.filter(email=email).first()
-
-            if not common_user:
-                # 새 사용자라면 CommonUser 생성 (비밀번호 추가)
-                common_user = CommonUser.objects.create(
-                    email=email,
-                    join_type="user",
-                    is_active=True,
-                )
-                dummy_password = create_dummy_password(common_user)
-
-            # JWT 토큰 발급
-            access_token = create_access_token(common_user)
-            refresh_token = create_refresh_token(common_user)
-
-            response = {
-                "message": "로그인 성공",
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "token_type": "bearer",
-            }
-
-            return JsonResponse(response, status=200)
-
-        except Exception as e:
-            return JsonResponse(
-                {"message": "서버 오류", "error": str(e)}, status=500
+                {"message": "탈퇴 중 오류가 발생했습니다."}, status=500
             )

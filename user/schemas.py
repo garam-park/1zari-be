@@ -20,14 +20,13 @@ class CommonUserBaseModel(BaseModel):
 
 
 class CommonUserResponseModel(BaseModel):
+    model_config = MY_CONFIG
+
     common_user_id: UUID
     email: EmailStr
     join_type: str
-    last_login: Optional[str] = None  # 로그인 시간도 예시로 추가
+    last_login: Optional[str] = None
     is_active: bool = False
-
-    class Config:
-        orm_mode = True
 
 
 # ------------------------
@@ -161,7 +160,7 @@ class CompanyJoinResponseModel(BaseModel):
 
 
 # ------------------------
-# 로그인 모델
+# 로그인 요청 모델
 # ------------------------
 
 
@@ -177,6 +176,11 @@ class CompanyLoginRequest(BaseModel):
 
     email: EmailStr
     password: str
+
+
+# ------------------------
+# 로그인 응답 모델
+# ------------------------
 
 
 class UserLoginResponse(BaseModel):
@@ -198,6 +202,62 @@ class CompanyLoginResponse(BaseModel):
 
 
 # ------------------------
+# 회원정보 수정 요청 모델
+# ------------------------
+
+
+class UserInfoUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    birthday: Optional[date] = None
+    interest: Optional[List[str]] = None
+    purpose_subscription: Optional[List[str]] = None
+    route: Optional[List[str]] = None
+
+
+class CompanyInfoUpdateRequest(BaseModel):
+    company_name: Optional[str] = None
+    establishment: Optional[date] = None
+    company_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    company_introduction: Optional[str] = None
+    ceo_name: Optional[str] = None
+    manager_name: Optional[str] = None
+    manager_phone_number: Optional[str] = None
+    manager_email: Optional[str] = None
+
+
+# ------------------------
+# 회원정보 수정 응답 모델
+# ------------------------
+
+
+class UserInfoResponse(BaseModel):
+    message: str
+    name: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    birthday: Optional[date] = None
+    interest: Optional[List[str]] = None
+    purpose_subscription: Optional[List[str]] = None
+    route: Optional[List[str]] = None
+
+
+class CompanyInfoResponse(BaseModel):
+    message: str
+    company_name: Optional[str] = None
+    establishment: Optional[date] = None
+    company_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    company_introduction: Optional[str] = None
+    ceo_name: Optional[str] = None
+    manager_name: Optional[str] = None
+    manager_phone_number: Optional[str] = None
+    manager_email: Optional[str] = None
+
+
+# ------------------------
 # 로그아웃 요청 모델
 # ------------------------
 
@@ -206,6 +266,17 @@ class LogoutRequest(BaseModel):
     model_config = MY_CONFIG
 
     refresh_token: str
+
+
+# ------------------------
+# 로그아웃 응답 모델
+# ------------------------
+
+
+class LogoutResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
 
 
 # ------------------------
@@ -267,3 +338,114 @@ class VerifyBusinessRegistrationRequest(BaseModel):
     b_no: str  # 사업자등록번호
     p_nm: str  # 대표자 이름
     start_dt: str  # 개업일자
+
+
+# ------------------------
+# oauth 요청 모델
+# ------------------------
+
+
+class KakaoLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    code: str
+
+
+class NaverLoginRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    code: str
+    state: str
+
+
+# ------------------------
+# oauth 응답 모델
+# ------------------------
+
+
+class KakaoLoginResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+
+class NaverLoginResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+
+# ------------------------
+# 이메일, 비밀번호 찾기 요청 모델
+# ------------------------
+
+
+class FindUserEmailRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    phone_number: str
+
+
+class ResetUserPasswordRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    email: EmailStr
+    phone_number: str
+    new_password: str
+
+
+class FindCompanyEmailRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    phone_number: str
+    business_registration_number: str
+
+
+class ResetCompanyPasswordRequest(BaseModel):
+    model_config = MY_CONFIG
+
+    email: EmailStr
+    phone_number: str
+    business_registration_number: str
+    new_password: str
+
+
+# ------------------------
+# 이메일, 비밀번호 찾기 응답 모델
+# ------------------------
+
+
+class FindUserEmailResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    email: str
+    message: Optional[str] = None  # 성공 메시지
+    errors: Optional[List[str]] = None  # 오류 메시지
+
+
+class ResetUserPasswordResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    errors: Optional[List[str]] = None
+
+
+class FindCompanyEmailResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    email: str
+    message: Optional[str] = None
+    errors: Optional[List[str]] = None
+
+
+class ResetCompanyPasswordResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
+    errors: Optional[List[str]] = None
