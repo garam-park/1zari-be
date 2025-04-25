@@ -6,10 +6,13 @@ import requests
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.hashers import make_password
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views import View
 from pydantic import ValidationError
 
+from utils.common import get_valid_nomal_user, get_valid_company_user
 from user.models import CommonUser, CompanyInfo, UserInfo
 from user.redis import r
 from user.schemas import (
@@ -33,7 +36,8 @@ from user.schemas import (
     UserJoinResponseModel,
     UserLoginRequest,
     UserLoginResponse,
-    UserSignupRequest,
+    UserSignupRequest, LogoutResponse, UserInfoUpdateRequest, UserInfoResponse, CompanyInfoUpdateRequest,
+    CompanyInfoResponse,
 )
 
 from .views_token import create_access_token, create_refresh_token
@@ -270,8 +274,75 @@ class CompanyLoginView(View):
             return JsonResponse(
                 {"message": "서버 오류", "error": str(e)}, status=500
             )
+class UserInfoUpdateView(View):
+    def patch(self, request, user_id, *args, **kwargs):
+        try:
+            user_info = get_valid_nomal_user(request.user)
 
+            # URL에 있는 user_id와 인증된 유저 ID가 다르면 막기
+            if str(user_info.user_id) != user_id:
+                return JsonResponse({"message": "권한이 없습니다."}, status=403)
 
+            body = json.loads(request.body)
+            data = UserInfoUpdateRequest(**body)
+
+            for field, value in data.model_dump(exclude_unset=True).items():
+                setattr(user_info, field, value)
+            user_info.save()
+
+            response = UserInfoResponse(
+                message="회원 정보가 성공적으로 수정되었습니다.",
+                name=user_info.name,
+                phone_number=user_info.phone_number,
+                gender=user_info.gender,
+                birthday=user_info.birthday,
+                interest=user_info.interest,
+                purpose_subscription=user_info.purpose_subscription,
+                route=user_info.route,
+            )
+            return JsonResponse(response.model_dump(), status=200)
+
+        except PermissionDenied as e:
+            return JsonResponse({"message": str(e)}, status=403)
+        except Exception as e:
+            return JsonResponse({"message": "서버 오류가 발생했습니다.", "detail": str(e)}, status=500)
+class CompanyInfoUpdateView(View):
+    def patch(self, request, company_id, *args, **kwargs):
+        try:
+            token = request.user
+            company_user = get_valid_company_user(token)
+
+            if str(company_user.company_id) != company_id:
+                return JsonResponse({"message": "권한이 없습니다."}, status=403)
+
+            body = json.loads(request.body)
+            validated_data = CompanyInfoUpdateRequest(**body)
+
+            for field, value in validated_data.model_dump(exclude_none=True).items():
+                setattr(company_user, field, value)
+
+            company_user.save()
+
+            response_data = CompanyInfoResponse(
+                message="회사 정보가 성공적으로 수정되었습니다.",
+                company_name=company_user.company_name,
+                establishment=company_user.establishment,
+                company_address=company_user.company_address,
+                business_registration_number=company_user.business_registration_number,
+                company_introduction=company_user.company_introduction,
+                ceo_name=company_user.ceo_name,
+                manager_name=company_user.manager_name,
+                manager_phone_number=company_user.manager_phone_number,
+                manager_email=company_user.manager_email,
+            )
+            return JsonResponse(response_data.model_dump(), status=200)
+
+        except PermissionDenied as e:
+            return JsonResponse({"message": str(e)}, status=403)
+        except ValidationError as e:
+            return JsonResponse({"message": str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({"message": f"오류 발생: {str(e)}"}, status=500)
 class LogoutView(View):
     def post(self, request, *args, **kwargs):
         try:
@@ -299,7 +370,7 @@ class LogoutView(View):
             # Redis에 블랙리스트 등록
             r.setex(f"blacklist:refresh:{refresh_token}", ttl, "true")
 
-            return JsonResponse({"message": "로그아웃 성공"}, status=200)
+            return JsonResponse(LogoutResponse(message="로그아웃 성공").model_dump(), status=200)
 
         except jwt.ExpiredSignatureError:
             return JsonResponse(
@@ -490,3 +561,35 @@ def reset_company_password(request):
             },
             status=400,
         )
+
+
+class UserDeleteView(View):
+    def delete(self, request, *args, **kwargs):
+        try:
+            token = request.user  # 인증된 유저의 토큰 정보
+            if not token.is_authenticated:
+                raise PermissionDenied("Authentication is required.")
+
+            # 일반 유저 탈퇴 처리
+            if token.join_type == "nomal":
+                user_info = get_valid_nomal_user(token)
+                common_user = user_info.common_user
+                user_info.delete()
+                common_user.delete()
+
+            # 기업 유저 탈퇴 처리
+            elif token.join_type == "company":
+                company_info = get_valid_company_user(token)
+                common_user = company_info.common_user
+                company_info.delete()
+                common_user.delete()
+
+            else:
+                raise PermissionDenied("Invalid user type.")
+
+            return JsonResponse({"message": "회원 탈퇴가 완료되었습니다."}, status=200)
+
+        except PermissionDenied as e:
+            return JsonResponse({"message": str(e)}, status=403)
+        except Exception as e:
+            return JsonResponse({"message": "탈퇴 중 오류가 발생했습니다."}, status=500)

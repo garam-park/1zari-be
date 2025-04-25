@@ -25,7 +25,7 @@ class CommonUserResponseModel(BaseModel):
     common_user_id: UUID
     email: EmailStr
     join_type: str
-    last_login: Optional[str] = None  # 로그인 시간도 예시로 추가
+    last_login: Optional[str] = None
     is_active: bool = False
 
 
@@ -200,6 +200,55 @@ class CompanyLoginResponse(BaseModel):
     refresh_token: str
     token_type: str
 
+# ------------------------
+# 회원정보 수정 요청 모델
+# ------------------------
+
+class UserInfoUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    birthday: Optional[date] = None
+    interest: Optional[List[str]] = None
+    purpose_subscription: Optional[List[str]] = None
+    route: Optional[List[str]] = None
+
+class CompanyInfoUpdateRequest(BaseModel):
+    company_name: Optional[str] = None
+    establishment: Optional[date] = None
+    company_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    company_introduction: Optional[str] = None
+    ceo_name: Optional[str] = None
+    manager_name: Optional[str] = None
+    manager_phone_number: Optional[str] = None
+    manager_email: Optional[str] = None
+
+# ------------------------
+# 회원정보 수정 응답 모델
+# ------------------------
+
+class UserInfoResponse(BaseModel):
+    message: str
+    name: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    birthday: Optional[date] = None
+    interest: Optional[List[str]] = None
+    purpose_subscription: Optional[List[str]] = None
+    route: Optional[List[str]] = None
+
+class CompanyInfoResponse(BaseModel):
+    message: str
+    company_name: Optional[str] = None
+    establishment: Optional[date] = None
+    company_address: Optional[str] = None
+    business_registration_number: Optional[str] = None
+    company_introduction: Optional[str] = None
+    ceo_name: Optional[str] = None
+    manager_name: Optional[str] = None
+    manager_phone_number: Optional[str] = None
+    manager_email: Optional[str] = None
 
 # ------------------------
 # 로그아웃 요청 모델
@@ -211,6 +260,14 @@ class LogoutRequest(BaseModel):
 
     refresh_token: str
 
+# ------------------------
+# 로그아웃 응답 모델
+# ------------------------
+
+class LogoutResponse(BaseModel):
+    model_config = MY_CONFIG
+
+    message: str
 
 # ------------------------
 # 토큰 갱신 모델
