@@ -30,7 +30,9 @@ class KakaoLoginView(View):
         try:
             code = request.GET.get("code")
             if code is None:
-                return JsonResponse({"message": "code가 필요합니다."}, status=400)
+                return JsonResponse(
+                    {"message": "code가 필요합니다."}, status=400
+                )
             try:
                 Kakao_login_request = KakaoLoginRequest(code=code)
             except ValueError as e:

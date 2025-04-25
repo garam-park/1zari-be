@@ -12,13 +12,14 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 from pydantic import ValidationError
 
-from utils.common import get_valid_nomal_user, get_valid_company_user
 from user.models import CommonUser, CompanyInfo, UserInfo
 from user.redis import r
 from user.schemas import (
     CommonUserBaseModel,
     CommonUserResponseModel,
     CompanyInfoModel,
+    CompanyInfoResponse,
+    CompanyInfoUpdateRequest,
     CompanyJoinResponseModel,
     CompanyLoginRequest,
     CompanyLoginResponse,
@@ -28,17 +29,20 @@ from user.schemas import (
     FindUserEmailRequest,
     FindUserEmailResponse,
     LogoutRequest,
+    LogoutResponse,
     ResetCompanyPasswordRequest,
     ResetCompanyPasswordResponse,
     ResetUserPasswordRequest,
     ResetUserPasswordResponse,
     UserInfoModel,
+    UserInfoResponse,
+    UserInfoUpdateRequest,
     UserJoinResponseModel,
     UserLoginRequest,
     UserLoginResponse,
-    UserSignupRequest, LogoutResponse, UserInfoUpdateRequest, UserInfoResponse, CompanyInfoUpdateRequest,
-    CompanyInfoResponse,
+    UserSignupRequest,
 )
+from utils.common import get_valid_company_user, get_valid_nomal_user
 
 from .views_token import create_access_token, create_refresh_token
 
@@ -274,6 +278,8 @@ class CompanyLoginView(View):
             return JsonResponse(
                 {"message": "서버 오류", "error": str(e)}, status=500
             )
+
+
 class UserInfoUpdateView(View):
     def patch(self, request, *args, **kwargs):
         try:
@@ -305,7 +311,12 @@ class UserInfoUpdateView(View):
         except PermissionDenied as e:
             return JsonResponse({"message": str(e)}, status=403)
         except Exception as e:
-            return JsonResponse({"message": "서버 오류가 발생했습니다.", "detail": str(e)}, status=500)
+            return JsonResponse(
+                {"message": "서버 오류가 발생했습니다.", "detail": str(e)},
+                status=500,
+            )
+
+
 class CompanyInfoUpdateView(View):
     def patch(self, request, *args, **kwargs):
         try:
@@ -318,7 +329,9 @@ class CompanyInfoUpdateView(View):
             body = json.loads(request.body)
             validated_data = CompanyInfoUpdateRequest(**body)
 
-            for field, value in validated_data.model_dump(exclude_none=True).items():
+            for field, value in validated_data.model_dump(
+                exclude_none=True
+            ).items():
                 setattr(company_user, field, value)
 
             company_user.save()
@@ -343,6 +356,8 @@ class CompanyInfoUpdateView(View):
             return JsonResponse({"message": str(e)}, status=400)
         except Exception as e:
             return JsonResponse({"message": f"오류 발생: {str(e)}"}, status=500)
+
+
 class LogoutView(View):
     def post(self, request, *args, **kwargs):
         try:
@@ -370,7 +385,9 @@ class LogoutView(View):
             # Redis에 블랙리스트 등록
             r.setex(f"blacklist:refresh:{refresh_token}", ttl, "true")
 
-            return JsonResponse(LogoutResponse(message="로그아웃 성공").model_dump(), status=200)
+            return JsonResponse(
+                LogoutResponse(message="로그아웃 성공").model_dump(), status=200
+            )
 
         except jwt.ExpiredSignatureError:
             return JsonResponse(
@@ -440,7 +457,9 @@ def reset_user_password(request):
             common_user.password = make_password(new_password)
             common_user.save()
 
-            response_data = ResetUserPasswordResponse(message="비밀번호 재설정 완료")
+            response_data = ResetUserPasswordResponse(
+                message="비밀번호 재설정 완료"
+            )
             return JsonResponse(response_data.model_dump())
 
         except UserInfo.DoesNotExist:
@@ -485,7 +504,9 @@ def find_company_email(request):
                 )
 
             # 사업자 이메일 반환
-            response_data = FindCompanyEmailResponse(email=company_info.manager_email)
+            response_data = FindCompanyEmailResponse(
+                email=company_info.manager_email
+            )
             return JsonResponse(response_data.model_dump())
 
         except CompanyInfo.DoesNotExist:
@@ -544,7 +565,9 @@ def reset_company_password(request):
             common_user.password = make_password(new_password)
             common_user.save()
 
-            response_data = ResetCompanyPasswordResponse(message="비밀번호 재설정 완료")
+            response_data = ResetCompanyPasswordResponse(
+                message="비밀번호 재설정 완료"
+            )
             return JsonResponse(response_data.model_dump())
 
         except CompanyInfo.DoesNotExist:
@@ -587,9 +610,13 @@ class UserDeleteView(View):
             else:
                 raise PermissionDenied("Invalid user type.")
 
-            return JsonResponse({"message": "회원 탈퇴가 완료되었습니다."}, status=200)
+            return JsonResponse(
+                {"message": "회원 탈퇴가 완료되었습니다."}, status=200
+            )
 
         except PermissionDenied as e:
             return JsonResponse({"message": str(e)}, status=403)
         except Exception as e:
-            return JsonResponse({"message": "탈퇴 중 오류가 발생했습니다."}, status=500)
+            return JsonResponse(
+                {"message": "탈퇴 중 오류가 발생했습니다."}, status=500
+            )
