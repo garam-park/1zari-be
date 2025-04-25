@@ -15,7 +15,6 @@ from resume.schemas import (
     CertificationInfoModel,
     JobpostingGetListModel,
     JobpostingListOutputModel,
-    ResumeOutputModel,
     SnapshotResumeModel,
     SubmissionCompanyDetailModel,
     SubmissionCompanyGetListInfoModel,
@@ -242,6 +241,9 @@ class SubmissionMemoView(View):
     def delete(
         self, request: HttpRequest, submission_id: uuid.UUID
     ) -> JsonResponse:
+        """
+        memo 삭제
+        """
         try:
             token = request.user
             user = get_valid_nomal_user(token)
@@ -265,7 +267,7 @@ class SubmissionMemoView(View):
 
 class SubmissionCompanyListView(View):
     """
-    기업 유저 지원 목록 조회
+    기업 유저 지원자 목록 조회
     """
 
     def get(self, request: HttpRequest) -> JsonResponse:
@@ -307,6 +309,10 @@ class SubmissionCompanyListView(View):
 
 
 class SubmissionCompanyDetialView(View):
+    """
+    기업회원 지원자 이력서 조회
+    """
+
     def get(
         self, request: HttpRequest, submission_id: uuid.UUID
     ) -> JsonResponse:
