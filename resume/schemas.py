@@ -91,6 +91,7 @@ class ResumeOutputModel(BaseModel):
     career_list: Optional[List[CareerInfoModel]]
     certification_list: Optional[List[CertificationInfoModel]]
 
+
 class SubmissionOutputModel(BaseModel):
     model_config = MY_CONFIG
     job_category: str = ""
@@ -101,6 +102,8 @@ class SubmissionOutputModel(BaseModel):
     introduce: str
     career_list: Optional[List[CareerInfoModel]]
     certification_list: Optional[List[CertificationInfoModel]]
+
+
 # ------------------------
 # Submission (지원한 이력서)
 # ------------------------
@@ -108,10 +111,11 @@ class JobpostingListOutputModel(BaseModel):
     """
     채용공고 내보내기 모델
     """
+
     model_config = MY_CONFIG
     job_posting_id: UUID
-    city : str
-    district : str
+    city: str
+    district: str
     company_name: str
     company_address: str
     job_posting_title: str
@@ -179,11 +183,12 @@ class SubmissionGetListModel(BaseModel):
     memo: Optional[str] = None
     created_at: date
 
+
 class SubmissionCompanyOutputDetailModel(BaseModel):
     model_config = MY_CONFIG
 
     job_category: str
-    name : str
+    name: str
     resume_title: str
     education_level: str
     school_name: str
@@ -205,7 +210,7 @@ class SubmissionCompanyGetListInfoModel(BaseModel):
     model_config = MY_CONFIG
 
     submission_id: UUID
-    job_posting_id :UUID
+    job_posting_id: UUID
     name: str
     summary: str
     is_read: bool
@@ -249,9 +254,11 @@ class SubmissionDetailResponseModel(BaseModel):
     message: str
     submission: SubmissionModel
 
+
 class SubmissionMemoResponseModel(BaseModel):
-    message : str
-    memo : Optional[str] = None
+    message: str
+    memo: Optional[str] = None
+
 
 class SubmissionCompanyDetailModel(BaseModel):
     message: str

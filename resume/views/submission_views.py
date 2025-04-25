@@ -17,13 +17,16 @@ from resume.schemas import (
     JobpostingListOutputModel,
     ResumeOutputModel,
     SnapshotResumeModel,
+    SubmissionCompanyDetailModel,
     SubmissionCompanyGetListInfoModel,
     SubmissionCompanyGetListOutputModel,
+    SubmissionCompanyOutputDetailModel,
     SubmissionDetailResponseModel,
     SubmissionListResponseModel,
+    SubmissionMemoResponseModel,
     SubmissionMemoUpdateModel,
-    SubmissionModel, SubmissionMemoResponseModel, SubmissionOutputModel,
-    SubmissionCompanyDetailModel, SubmissionCompanyOutputDetailModel,
+    SubmissionModel,
+    SubmissionOutputModel,
 )
 from resume.serializer import (
     serialize_careers,
@@ -37,6 +40,7 @@ from utils.common import get_valid_company_user, get_valid_nomal_user
 # ------------------------
 # 지원 관련 api
 # ------------------------
+
 
 @method_decorator(csrf_protect, name="dispatch")
 class SubmissionListView(View):
@@ -106,11 +110,17 @@ class SubmissionListView(View):
                 job_posting_title=job_posting.job_posting_title,
                 summary=job_posting.summary,
                 deadline=job_posting.deadline,
-                is_bookmarked= True if JobPostingBookmark.objects.filter(job_posting_id=job_posting).exists() else False
+                is_bookmarked=(
+                    True
+                    if JobPostingBookmark.objects.filter(
+                        job_posting_id=job_posting
+                    ).exists()
+                    else False
+                ),
             )
 
             submission_model = SubmissionModel(
-                submission_id= submission.submission_id,
+                submission_id=submission.submission_id,
                 job_posting=job_posting_model,
                 snapshot_resume=SnapshotResumeModel.model_validate(
                     submission.snapshot_resume
@@ -122,7 +132,7 @@ class SubmissionListView(View):
 
             response = SubmissionDetailResponseModel(
                 message="Successfully create new submission",
-                submission=submission_model
+                submission=submission_model,
             )
             return JsonResponse(response.model_dump(mode="json"), status=201)
 
@@ -133,6 +143,7 @@ class SubmissionListView(View):
 # ------------------------
 # 지원 관련 상세 api
 # ------------------------
+
 
 @method_decorator(csrf_protect, name="dispatch")
 class SubmissionDetailView(View):
@@ -191,6 +202,7 @@ class SubmissionDetailView(View):
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
+
 @method_decorator(csrf_protect, name="dispatch")
 class SubmissionMemoView(View):
     """
@@ -227,12 +239,15 @@ class SubmissionMemoView(View):
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
-
-    def delete(self, request: HttpRequest, submission_id : uuid.UUID)->JsonResponse:
+    def delete(
+        self, request: HttpRequest, submission_id: uuid.UUID
+    ) -> JsonResponse:
         try:
             token = request.user
             user = get_valid_nomal_user(token)
-            submission = Submission.objects.get(user=user, submission_id=submission_id)
+            submission = Submission.objects.get(
+                user=user, submission_id=submission_id
+            )
             if submission is not None:
                 submission.memo = None
                 submission.save()
@@ -241,7 +256,9 @@ class SubmissionMemoView(View):
                     {"errors": "Not found submission data"}, status=404
                 )
 
-            return JsonResponse({"message": "Successfully deleted submission memo"}, status=200)
+            return JsonResponse(
+                {"message": "Successfully deleted submission memo"}, status=200
+            )
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
@@ -288,8 +305,11 @@ class SubmissionCompanyListView(View):
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
+
 class SubmissionCompanyDetialView(View):
-    def get(self, request: HttpRequest, submission_id:uuid.UUID)-> JsonResponse:
+    def get(
+        self, request: HttpRequest, submission_id: uuid.UUID
+    ) -> JsonResponse:
         try:
             token = request.user
             user = get_valid_company_user(token)
@@ -301,22 +321,23 @@ class SubmissionCompanyDetialView(View):
             submission.is_read = True
             submission.save()
 
-
             submission_model = SubmissionCompanyOutputDetailModel(
                 job_category=submission.snapshot_resume["job_category"],
-                name= submission.user.name,
+                name=submission.user.name,
                 resume_title=submission.snapshot_resume["resume_title"],
                 education_state=submission.snapshot_resume["education_state"],
                 education_level=submission.snapshot_resume["education_level"],
                 school_name=submission.snapshot_resume["school_name"],
-                introduce= submission.snapshot_resume["introduce"],
+                introduce=submission.snapshot_resume["introduce"],
                 career_list=submission.snapshot_resume["career_list"],
-                certification_list=submission.snapshot_resume["certification_list"]
+                certification_list=submission.snapshot_resume[
+                    "certification_list"
+                ],
             )
 
             response = SubmissionCompanyDetailModel(
                 message="Successfully loaded submission data",
-                submission=submission_model
+                submission=submission_model,
             )
             return JsonResponse(response.model_dump(), status=200)
 
@@ -343,7 +364,7 @@ def save_submission(
         education_level=resume.education_level,
         introduce=resume.introduce,
         career_list=career_model,
-        certification_list=certification_model
+        certification_list=certification_model,
     )
     submission = Submission.objects.create(
         job_posting=job_posting,
