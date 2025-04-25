@@ -1,5 +1,6 @@
 import json
 import uuid
+from http.client import responses
 
 import pytest
 from django.contrib.gis.geos import Point
@@ -79,6 +80,8 @@ def mock_job_posting(db, mock_company_user):
         work_time_end=timezone.now() + timezone.timedelta(hours=8),
         posting_type="정규직",
         employment_type="경력",
+        city="인천광역시",
+        district="부평구",
         job_keyword_main="개발",
         job_keyword_sub=["백엔드", "Django", "Python"],
         number_of_positions=2,
@@ -244,8 +247,111 @@ def test_submiison_company_get_list_success(
         response_data["submission_list"][0]["resume_title"]
         == mock_resume.resume_title
     )
+    assert response_data["submission_list"][0]["job_posting_id"] == str(
+        mock_submission.job_posting.job_posting_id
+    )
 
 
 @pytest.mark.django_db
-def test_update_memo_success(client):
-    pass
+def test_update_memo_success(
+    client,
+    mock_resume,
+    mock_careers,
+    mock_certifications,
+    mock_user,
+    mock_submission,
+    mock_job_posting,
+    mock_common_user,
+):
+    new_memo = {"memo": "new_memo"}
+    url = f"/api/submission/memo/{mock_submission.submission_id}/"
+
+    client.force_login(mock_common_user)
+
+    response = client.patch(url, new_memo, content_type="application/json")
+    response_data = json.loads(response.content)
+    assert response.status_code == 200
+    assert response_data["message"] == "Successfully updated memo"
+    assert response_data["memo"] == new_memo["memo"]
+
+
+@pytest.mark.django_db
+def test_delete_memo_success(
+    client,
+    mock_resume,
+    mock_careers,
+    mock_certifications,
+    mock_user,
+    mock_common_user,
+    mock_job_posting,
+    mock_submission,
+):
+    client.force_login(mock_common_user)
+    url = f"/api/submission/memo/{mock_submission.submission_id}/"
+
+    response = client.delete(url, content_type="application/json")
+
+    response_data = json.loads(response.content)
+
+    assert response.status_code == 200
+    assert response_data["message"] == "Successfully deleted submission memo"
+
+
+@pytest.mark.django_db
+def test_submission_create_success(
+    client,
+    mock_resume,
+    mock_careers,
+    mock_certifications,
+    mock_common_user,
+    mock_user,
+    mock_job_posting,
+):
+    """
+    공고 지원 api 테스트
+    """
+    client.force_login(mock_common_user)
+    url = "/api/submission/"
+
+    post_data = {
+        "job_posting_id": mock_job_posting.job_posting_id,
+        "resume_id": mock_resume.resume_id,
+    }
+
+    response = client.post(url, post_data, content_type="application/json")
+
+    response_data = json.loads(response.content)
+    print(response_data)
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
+def test_submission_company_detail_get_success(
+    client,
+    mock_resume,
+    mock_careers,
+    mock_certifications,
+    mock_common_company_user,
+    mock_company_user,
+    mock_submission,
+    mock_job_posting,
+):
+    url = f"/api/submission/company/{mock_submission.submission_id}/"
+
+    client.force_login(mock_common_company_user)
+
+    response = client.get(url, content_type="application/json")
+    print(response.content)
+    response_data = json.loads(response.content)["submission"]
+    print(response_data)
+
+    assert response.status_code == 200
+    assert response_data["name"] == mock_submission.user.name
+    assert (
+        response_data["resume_title"]
+        == mock_submission.snapshot_resume["resume_title"]
+    )
+    refreshed = Submission.objects.get(
+        submission_id=mock_submission.submission_id
+    )
+    assert refreshed.is_read is True

@@ -4,9 +4,11 @@ from http.client import responses
 
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_protect
 
-from job_posting.models import JobPosting
+from job_posting.models import JobPosting, JobPostingBookmark
 from resume.models import Resume, Submission
 from resume.schemas import (
     CareerInfoModel,
@@ -15,12 +17,16 @@ from resume.schemas import (
     JobpostingListOutputModel,
     ResumeOutputModel,
     SnapshotResumeModel,
+    SubmissionCompanyDetailModel,
     SubmissionCompanyGetListInfoModel,
     SubmissionCompanyGetListOutputModel,
+    SubmissionCompanyOutputDetailModel,
     SubmissionDetailResponseModel,
     SubmissionListResponseModel,
+    SubmissionMemoResponseModel,
     SubmissionMemoUpdateModel,
     SubmissionModel,
+    SubmissionOutputModel,
 )
 from resume.serializer import (
     serialize_careers,
@@ -36,6 +42,7 @@ from utils.common import get_valid_company_user, get_valid_nomal_user
 # ------------------------
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class SubmissionListView(View):
     """
     지원한 공고 리스트 API (유저)
@@ -80,6 +87,10 @@ class SubmissionListView(View):
                 .prefetch_related("careers", "certifications")
                 .first()
             )
+            if job_posting is None:
+                return JsonResponse(
+                    {"errors": "Not founded job_posting data"}, status=404
+                )
             if resume is None:
                 return JsonResponse(
                     {"errors": "Not founded resume data"}, status=404
@@ -90,8 +101,22 @@ class SubmissionListView(View):
                 job_posting=job_posting, resume=resume, user=user
             )
 
-            job_posting_model = JobpostingListOutputModel.model_validate(
-                job_posting
+            job_posting_model = JobpostingListOutputModel(
+                job_posting_id=job_posting.job_posting_id,
+                city=job_posting.city,
+                district=job_posting.district,
+                company_name=job_posting.company_id.company_name,
+                company_address=job_posting.company_id.company_address,
+                job_posting_title=job_posting.job_posting_title,
+                summary=job_posting.summary,
+                deadline=job_posting.deadline,
+                is_bookmarked=(
+                    True
+                    if JobPostingBookmark.objects.filter(
+                        job_posting_id=job_posting
+                    ).exists()
+                    else False
+                ),
             )
 
             submission_model = SubmissionModel(
@@ -102,14 +127,14 @@ class SubmissionListView(View):
                 ),
                 memo=submission.memo,
                 is_read=submission.is_read,
-                created_at=submission.created_at,
+                created_at=submission.created_at.date(),
             )
 
             response = SubmissionDetailResponseModel(
                 message="Successfully create new submission",
                 submission=submission_model,
             )
-            return JsonResponse(response.model_dump(), status=201)
+            return JsonResponse(response.model_dump(mode="json"), status=201)
 
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
@@ -120,6 +145,7 @@ class SubmissionListView(View):
 # ------------------------
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class SubmissionDetailView(View):
     """
     지원 공고 상세
@@ -177,6 +203,7 @@ class SubmissionDetailView(View):
             return JsonResponse({"errors": str(e)}, status=400)
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class SubmissionMemoView(View):
     """
     memo update 및 delete 뷰
@@ -201,15 +228,37 @@ class SubmissionMemoView(View):
                 return JsonResponse(
                     {"errors": "Not found submission data"}, status=404
                 )
-            if update_data:
-                submission.memo = update_data.memo
+            if update_data is not None:
+                submission.memo = str(update_data.memo)
                 submission.save()
-            submission_model = SubmissionModel.model_validate(submission)
 
-            response = SubmissionDetailResponseModel(
-                message="Successfully updated memo", submission=submission_model
+            response = SubmissionMemoResponseModel(
+                message="Successfully updated memo", memo=submission.memo
             )
             return JsonResponse(response.model_dump(), status=200)
+        except Exception as e:
+            return JsonResponse({"errors": str(e)}, status=400)
+
+    def delete(
+        self, request: HttpRequest, submission_id: uuid.UUID
+    ) -> JsonResponse:
+        try:
+            token = request.user
+            user = get_valid_nomal_user(token)
+            submission = Submission.objects.get(
+                user=user, submission_id=submission_id
+            )
+            if submission is not None:
+                submission.memo = None
+                submission.save()
+            else:
+                return JsonResponse(
+                    {"errors": "Not found submission data"}, status=404
+                )
+
+            return JsonResponse(
+                {"message": "Successfully deleted submission memo"}, status=200
+            )
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
@@ -236,7 +285,8 @@ class SubmissionCompanyListView(View):
             submission_list_model: list[SubmissionCompanyGetListInfoModel] = [
                 SubmissionCompanyGetListInfoModel(
                     submission_id=submission.submission_id,
-                    user_name=submission.user.name,
+                    job_posting_id=submission.job_posting.job_posting_id,
+                    name=submission.user.name,
                     summary=submission.job_posting.summary,
                     is_read=submission.is_read,
                     created_at=submission.created_at.date(),
@@ -256,6 +306,45 @@ class SubmissionCompanyListView(View):
             return JsonResponse({"errors": str(e)}, status=400)
 
 
+class SubmissionCompanyDetialView(View):
+    def get(
+        self, request: HttpRequest, submission_id: uuid.UUID
+    ) -> JsonResponse:
+        try:
+            token = request.user
+            user = get_valid_company_user(token)
+            submission = Submission.objects.get(submission_id=submission_id)
+            if submission is None:
+                return JsonResponse(
+                    {"errors": "Not found submission data"}, status=404
+                )
+            submission.is_read = True
+            submission.save()
+
+            submission_model = SubmissionCompanyOutputDetailModel(
+                job_category=submission.snapshot_resume["job_category"],
+                name=submission.user.name,
+                resume_title=submission.snapshot_resume["resume_title"],
+                education_state=submission.snapshot_resume["education_state"],
+                education_level=submission.snapshot_resume["education_level"],
+                school_name=submission.snapshot_resume["school_name"],
+                introduce=submission.snapshot_resume["introduce"],
+                career_list=submission.snapshot_resume["career_list"],
+                certification_list=submission.snapshot_resume[
+                    "certification_list"
+                ],
+            )
+
+            response = SubmissionCompanyDetailModel(
+                message="Successfully loaded submission data",
+                submission=submission_model,
+            )
+            return JsonResponse(response.model_dump(), status=200)
+
+        except Exception as e:
+            return JsonResponse({"errors": str(e)}, status=400)
+
+
 def save_submission(
     job_posting: JobPosting, user: UserInfo, resume: Resume
 ) -> Submission:
@@ -266,22 +355,20 @@ def save_submission(
     certification_model: list[CertificationInfoModel] = (
         serialize_certifications(list(resume.certifications.all()))
     )
-    resume_dict = {
-        "resume_id": str(resume.resume_id),
-        "user": UserInfoModel.model_validate(user).model_dump(),
-        "job_category": resume.job_category,
-        "resume_title": resume.resume_title,
-        "education_level": resume.education_level,
-        "school_name": resume.school_name,
-        "education_state": resume.education_state,
-        "introduce": resume.introduce,
-        "career_list": career_model,
-        "certification_list": certification_model,
-    }
-    resume_model = ResumeOutputModel.model_validate(resume_dict)
+
+    resume_model = SubmissionOutputModel(
+        job_category=resume.job_category,
+        resume_title=resume.resume_title,
+        education_state=resume.education_state,
+        school_name=resume.school_name,
+        education_level=resume.education_level,
+        introduce=resume.introduce,
+        career_list=career_model,
+        certification_list=certification_model,
+    )
     submission = Submission.objects.create(
         job_posting=job_posting,
         user=user,
-        snapshot_resume=resume_model,
+        snapshot_resume=resume_model.model_dump(mode="json"),
     )
     return submission
