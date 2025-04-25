@@ -275,12 +275,12 @@ class CompanyLoginView(View):
                 {"message": "서버 오류", "error": str(e)}, status=500
             )
 class UserInfoUpdateView(View):
-    def patch(self, request, user_id, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         try:
             user_info = get_valid_nomal_user(request.user)
 
             # URL에 있는 user_id와 인증된 유저 ID가 다르면 막기
-            if str(user_info.user_id) != user_id:
+            if str(user_info.user_id) != str(request.user.id):
                 return JsonResponse({"message": "권한이 없습니다."}, status=403)
 
             body = json.loads(request.body)
@@ -307,12 +307,12 @@ class UserInfoUpdateView(View):
         except Exception as e:
             return JsonResponse({"message": "서버 오류가 발생했습니다.", "detail": str(e)}, status=500)
 class CompanyInfoUpdateView(View):
-    def patch(self, request, company_id, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         try:
             token = request.user
             company_user = get_valid_company_user(token)
 
-            if str(company_user.company_id) != company_id:
+            if str(company_user.company_id) != str(request.company.id):
                 return JsonResponse({"message": "권한이 없습니다."}, status=403)
 
             body = json.loads(request.body)

@@ -11,6 +11,9 @@ from user.views.views import (
     find_user_email,
     reset_company_password,
     reset_user_password,
+    UserDeleteView,
+    CompanyInfoUpdateView,
+    UserInfoUpdateView,
 )
 from user.views.views_oauth import KakaoLoginView, NaverLoginView
 from user.views.views_token import TokenRefreshView
@@ -56,4 +59,7 @@ urlpatterns = [
         reset_company_password,
         name="reset-company-password",
     ),
+    path("info/", UserInfoUpdateView.as_view(), name="user-info-update"),
+    path("company/info/", CompanyInfoUpdateView.as_view(), name="company-info-update"),
+    path("delete/", UserDeleteView.as_view(), name="user-delete"),
 ]

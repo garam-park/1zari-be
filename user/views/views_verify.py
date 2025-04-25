@@ -17,7 +17,7 @@ from user.schemas import (
 
 
 class SendVerificationCodeView(View):
-    # 인증코드 생성, 발송/ ncp 프로젝트 생성이 안되서 임시
+    # 인증코드 생성, 발송
     def post(self, request, *args, **kwargs):
 
         try:
@@ -160,7 +160,7 @@ class VerifyBusinessRegistrationView(View):
             }
 
             response = requests.post(url, params=params, json=request_body)
-            response.raise_for_status()  # HTTPError 발생 시 처리
+            response.raise_for_status()
 
             result = response.json()
 

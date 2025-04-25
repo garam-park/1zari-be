@@ -28,30 +28,25 @@ class KakaoLoginView(View):
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> JsonResponse:
         try:
-            print("요청된 카카오 인가 코드:", request.GET.get("code"))
             code = request.GET.get("code")
-            if not code:
-                print("Error: code가 없습니다.")  # 추가
-                return JsonResponse(
-                    {"message": "code가 필요합니다."}, status=400
-                )
+            if code is None:
+                return JsonResponse({"message": "code가 필요합니다."}, status=400)
+            try:
+                Kakao_login_request = KakaoLoginRequest(code=code)
+            except ValueError as e:
+                return JsonResponse({"message": str(e)}, status=400)
 
             kakao_access_token = self.get_kakao_access_token(code)
-            print("카카오 액세스 토큰:", kakao_access_token)
             if not kakao_access_token:
-                print("Error: 카카오 인증 실패")  # 추가
                 return JsonResponse({"message": "카카오 인증 실패"}, status=400)
 
             user_data = self.get_kakao_user_info(kakao_access_token)
-            print("카카오 사용자 데이터:", user_data)
             if not user_data:
-                print("Error: 카카오 사용자 정보 요청 실패")  # 추가
                 return JsonResponse(
                     {"message": "카카오 사용자 정보 요청 실패"}, status=400
                 )
 
             email = user_data.get("kakao_account", {}).get("email")
-            print("카카오 이메일:", email)
             common_user = self.get_or_create_common_user(email)
 
             if common_user:
@@ -64,10 +59,8 @@ class KakaoLoginView(View):
                         refresh_token=refresh_token,
                         token_type="bearer",
                     )
-                    print("로그인 성공:", response.model_dump())  # 추가
                     return JsonResponse(response.model_dump(), status=200)
 
-                print("추가 정보 입력 필요:", email)  # 추가
                 return JsonResponse(
                     {
                         "message": "추가 정보 입력 필요",
@@ -76,11 +69,9 @@ class KakaoLoginView(View):
                     status=202,
                 )
 
-            print("Error: 사용자 생성 실패")  # 추가
             return JsonResponse({"message": "사용자 생성 실패"}, status=400)
 
         except Exception as e:
-            print("Error 발생:", str(e))  # 추가
             return JsonResponse(
                 {"message": "서버 오류", "error": str(e)}, status=500
             )
@@ -137,10 +128,14 @@ class NaverLoginView(View):
         try:
             code = request.GET.get("code")
             state = request.GET.get("state")
-            if not code or not state:
+            if code is None or state is None:
                 return JsonResponse(
                     {"message": "code와 state가 필요합니다."}, status=400
                 )
+            try:
+                naver_login_request = NaverLoginRequest(code=code, state=state)
+            except ValueError as e:
+                return JsonResponse({"message": str(e)}, status=400)
 
             naver_access_token = self.get_naver_access_token(code, state)
             if not naver_access_token:
