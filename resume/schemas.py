@@ -179,6 +179,19 @@ class SubmissionGetListModel(BaseModel):
     memo: Optional[str] = None
     created_at: date
 
+class SubmissionCompanyOutputDetailModel(BaseModel):
+    model_config = MY_CONFIG
+
+    job_category: str
+    name : str
+    resume_title: str
+    education_level: str
+    school_name: str
+    education_state: str
+    introduce: str
+    career_list: list[CareerInfoModel]
+    certification_list: list[CertificationInfoModel]
+
 
 class SubmissionGetListInfoModel(BaseModel):
     model_config = MY_CONFIG
@@ -193,7 +206,7 @@ class SubmissionCompanyGetListInfoModel(BaseModel):
 
     submission_id: UUID
     job_posting_id :UUID
-    user_name: str
+    name: str
     summary: str
     is_read: bool
     created_at: date
@@ -239,3 +252,7 @@ class SubmissionDetailResponseModel(BaseModel):
 class SubmissionMemoResponseModel(BaseModel):
     message : str
     memo : Optional[str] = None
+
+class SubmissionCompanyDetailModel(BaseModel):
+    message: str
+    submission: SubmissionCompanyOutputDetailModel

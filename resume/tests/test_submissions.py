@@ -313,3 +313,33 @@ def test_submission_create_success(
     response_data = json.loads(response.content)
     print(response_data)
     assert response.status_code == 201
+
+@pytest.mark.django_db
+def test_submission_company_detail_get_success(
+        client,
+        mock_resume,
+        mock_careers,
+        mock_certifications,
+        mock_common_company_user,
+        mock_company_user,
+        mock_submission,
+        mock_job_posting
+):
+    url = f"/api/submission/company/{mock_submission.submission_id}/"
+
+    client.force_login(mock_common_company_user)
+
+    response = client.get(
+        url,
+        content_type="application/json"
+    )
+    print(response.content)
+    response_data = json.loads(response.content)["submission"]
+    print(response_data)
+
+    assert response.status_code == 200
+    assert response_data["name"] == mock_submission.user.name
+    assert response_data["resume_title"] == mock_submission.snapshot_resume["resume_title"]
+    refreshed = Submission.objects.get(
+        submission_id=mock_submission.submission_id)
+    assert refreshed.is_read is True

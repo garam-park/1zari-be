@@ -4,7 +4,9 @@ from http.client import responses
 
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_protect
 
 from job_posting.models import JobPosting, JobPostingBookmark
 from resume.models import Resume, Submission
@@ -21,6 +23,7 @@ from resume.schemas import (
     SubmissionListResponseModel,
     SubmissionMemoUpdateModel,
     SubmissionModel, SubmissionMemoResponseModel, SubmissionOutputModel,
+    SubmissionCompanyDetailModel, SubmissionCompanyOutputDetailModel,
 )
 from resume.serializer import (
     serialize_careers,
@@ -35,7 +38,7 @@ from utils.common import get_valid_company_user, get_valid_nomal_user
 # 지원 관련 api
 # ------------------------
 
-
+@method_decorator(csrf_protect, name="dispatch")
 class SubmissionListView(View):
     """
     지원한 공고 리스트 API (유저)
@@ -131,7 +134,7 @@ class SubmissionListView(View):
 # 지원 관련 상세 api
 # ------------------------
 
-
+@method_decorator(csrf_protect, name="dispatch")
 class SubmissionDetailView(View):
     """
     지원 공고 상세
@@ -188,7 +191,7 @@ class SubmissionDetailView(View):
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
 
-
+@method_decorator(csrf_protect, name="dispatch")
 class SubmissionMemoView(View):
     """
     memo update 및 delete 뷰
@@ -266,7 +269,7 @@ class SubmissionCompanyListView(View):
                 SubmissionCompanyGetListInfoModel(
                     submission_id=submission.submission_id,
                     job_posting_id=submission.job_posting.job_posting_id,
-                    user_name=submission.user.name,
+                    name=submission.user.name,
                     summary=submission.job_posting.summary,
                     is_read=submission.is_read,
                     created_at=submission.created_at.date(),
@@ -284,6 +287,42 @@ class SubmissionCompanyListView(View):
             return JsonResponse(response.model_dump(), status=200)
         except Exception as e:
             return JsonResponse({"errors": str(e)}, status=400)
+
+class SubmissionCompanyDetialView(View):
+    def get(self, request: HttpRequest, submission_id:uuid.UUID)-> JsonResponse:
+        try:
+            token = request.user
+            user = get_valid_company_user(token)
+            submission = Submission.objects.get(submission_id=submission_id)
+            if submission is None:
+                return JsonResponse(
+                    {"errors": "Not found submission data"}, status=404
+                )
+            submission.is_read = True
+            submission.save()
+
+
+            submission_model = SubmissionCompanyOutputDetailModel(
+                job_category=submission.snapshot_resume["job_category"],
+                name= submission.user.name,
+                resume_title=submission.snapshot_resume["resume_title"],
+                education_state=submission.snapshot_resume["education_state"],
+                education_level=submission.snapshot_resume["education_level"],
+                school_name=submission.snapshot_resume["school_name"],
+                introduce= submission.snapshot_resume["introduce"],
+                career_list=submission.snapshot_resume["career_list"],
+                certification_list=submission.snapshot_resume["certification_list"]
+            )
+
+            response = SubmissionCompanyDetailModel(
+                message="Successfully loaded submission data",
+                submission=submission_model
+            )
+            return JsonResponse(response.model_dump(), status=200)
+
+        except Exception as e:
+            return JsonResponse({"errors": str(e)}, status=400)
+
 
 def save_submission(
     job_posting: JobPosting, user: UserInfo, resume: Resume
