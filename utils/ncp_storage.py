@@ -52,6 +52,7 @@ def upload_view(request):  #이미지 업로드 메서드
 
         try:
             file_url = upload_to_ncp_storage(file_obj) # 실제 스토리지에 저장된 파일 url
+            
             return JsonResponse({'file_url': file_url})
 
         except Exception as e:
