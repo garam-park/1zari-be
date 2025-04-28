@@ -1,5 +1,6 @@
-import uuid
 import os
+import uuid
+
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
@@ -14,11 +15,12 @@ def upload_to_ncp_storage(file_obj):
     # 업로드 경로 (폴더 구분 가능)
     s3_key = f"uploads/{unique_filename}"
 
-    s3 = boto3.client('s3',
-                      endpoint_url=settings.NCP_S3_ENDPOINT,
-                      aws_access_key_id=settings.NCP_S3_ACCESS_KEY,
-                      aws_secret_access_key=settings.NCP_S3_SECRET_KEY,
-                      )
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=settings.NCP_S3_ENDPOINT,
+        aws_access_key_id=settings.NCP_S3_ACCESS_KEY,
+        aws_secret_access_key=settings.NCP_S3_SECRET_KEY,
+    )
 
     bucket_name = settings.NCP_S3_BUCKET_NAME
 
@@ -28,9 +30,9 @@ def upload_to_ncp_storage(file_obj):
             Bucket=bucket_name,
             Key=s3_key,
             ExtraArgs={
-                'ACL': 'public-read',
-                'ContentType': file_obj.content_type
-            }
+                "ACL": "public-read",
+                "ContentType": file_obj.content_type,
+            },
         )
         # 성공하면 파일 URL 리턴
         file_url = f"https://kr.object.ncloudstorage.com/{bucket_name}/{s3_key}"
@@ -38,6 +40,7 @@ def upload_to_ncp_storage(file_obj):
 
     except (BotoCoreError, ClientError) as e:
         raise Exception(f"파일 업로드 실패: {e}")
+
 
 """
 def upload_view(request):  #이미지 업로드 메서드
