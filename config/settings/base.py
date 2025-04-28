@@ -181,3 +181,9 @@ KAKAO_REDIRECT_URL = secrets["kakao"]["redirect_url"]
 aligo_api_key = secrets["aligo"]["api_key"]
 aligo_user_id = secrets["aligo"]["user_id"]
 aligo_sender = secrets["aligo"]["sender"]
+
+# NCP object storage 서비스
+NCP_S3_ENDPOINT = secrets["NCP_S3_ENDPOINT"]
+NCP_S3_ACCESS_KEY = secrets["NCP_S3_ACCESS_KEY"]
+NCP_S3_SECRET_KEY = secrets["NCP_S3_SECRET_KEY"]
+NCP_S3_BUCKET_NAME = secrets["NCP_S3_BUCKET_NAME"]
