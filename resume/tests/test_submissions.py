@@ -395,7 +395,9 @@ def test_get_submission_detail_nomal_user(
     client.force_login(mock_common_user)
 
     response = client.get(url, content_type="application/json")
-    print(json.loads(response.content))
     response_data = json.loads(response.content)
 
     assert response.status_code == 200
+    assert response_data["submission"]["submission_id"] == str(
+        mock_submission.submission_id
+    )
