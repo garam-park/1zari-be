@@ -14,7 +14,7 @@ def common_user_data():
     return {
         "email": "testuser@example.com",
         "password": "testpassword123",
-        "join_type": "user",
+        "join_type": "normal",
         "is_active": True,
     }
 
