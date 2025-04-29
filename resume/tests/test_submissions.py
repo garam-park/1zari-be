@@ -339,6 +339,7 @@ def test_submission_create_success(
     response = client.post(url, post_data, content_type="application/json")
 
     response_data = json.loads(response.content)
+    print(response_data)
     assert response.status_code == 201
 
 
@@ -361,6 +362,7 @@ def test_submission_company_detail_get_success(
     client.force_login(mock_common_company_user)
 
     response = client.get(url, content_type="application/json")
+    print(json.loads(response.content))
     response_data = json.loads(response.content)["submission"]
 
     assert response.status_code == 200
@@ -374,3 +376,26 @@ def test_submission_company_detail_get_success(
     )
     # 기업 유저가 이력서 조회 했을 때 읽음 처리 확인
     assert refreshed.is_read is True
+
+
+@pytest.mark.django_db
+def test_get_submission_detail_nomal_user(
+    client,
+    mock_resume,
+    mock_careers,
+    mock_certifications,
+    mock_common_user,
+    mock_user,
+    mock_submission,
+    mock_job_posting,
+    mock_company_user,
+):
+    url = f"/api/submission/{mock_submission.submission_id}/"
+
+    client.force_login(mock_common_user)
+
+    response = client.get(url, content_type="application/json")
+    print(json.loads(response.content))
+    response_data = json.loads(response.content)
+
+    assert response.status_code == 200
