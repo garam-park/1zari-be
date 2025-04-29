@@ -27,6 +27,7 @@ class CommonUserResponseModel(BaseModel):
     join_type: str
     last_login: Optional[str] = None
     is_active: bool = False
+    is_staff: bool = False
 
 
 # ------------------------
@@ -97,7 +98,6 @@ class CompanySignupRequest(BaseModel):
     manager_name: str
     manager_phone_number: str
     manager_email: EmailStr
-    is_staff: bool
 
 
 # ------------------------
@@ -119,7 +119,6 @@ class CompanyInfoBaseModel(BaseModel):
     manager_name: str
     manager_phone_number: str
     manager_email: EmailStr
-    is_staff: bool
 
 
 class CompanyInfoModel(BaseModel):
@@ -135,7 +134,6 @@ class CompanyInfoModel(BaseModel):
     manager_name: str
     manager_phone_number: str
     manager_email: EmailStr
-    is_staff: bool
 
 
 # ------------------------
