@@ -59,7 +59,11 @@ urlpatterns = [
         reset_company_password,
         name="reset-company-password",
     ),
-    path("info/update/<uuid:user_id>", UserInfoUpdateView.as_view(), name="user-info-update"),
+    path(
+        "info/update/<uuid:user_id>",
+        UserInfoUpdateView.as_view(),
+        name="user-info-update",
+    ),
     path(
         "company/info/update/<uuid:company_id>",
         CompanyInfoUpdateView.as_view(),

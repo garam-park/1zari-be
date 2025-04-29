@@ -11,7 +11,7 @@ from django.test import Client
 from django.urls import reverse
 
 from user.models import CommonUser, CompanyInfo, UserInfo
-from user.views.views_token import create_refresh_token, create_access_token
+from user.views.views_token import create_access_token, create_refresh_token
 
 
 @pytest.fixture
@@ -71,21 +71,29 @@ def company_info():
         manager_email="company@example.com",
     )
 
+
 @pytest.fixture
 def common_user():
     return CommonUser.objects.create_user(
-        email="test_user@example.com", password="testpassword123!", join_type="normal"
+        email="test_user@example.com",
+        password="testpassword123!",
+        join_type="normal",
     )
+
 
 @pytest.fixture
 def common_company():
     return CommonUser.objects.create_user(
-        email="test_company@example.com", password="testpassword123!", join_type="company"
+        email="test_company@example.com",
+        password="testpassword123!",
+        join_type="company",
     )
+
 
 @pytest.fixture
 def user_token(common_user):
     return create_access_token(common_user)
+
 
 @pytest.fixture
 def company_token(common_company):
@@ -364,9 +372,13 @@ def test_reset_company_password(client, company_info):
 
 @pytest.mark.django_db
 @patch("utils.common.get_valid_normal_user")
-def test_normal_user_delete_success(mock_get_valid_normal_user, client, common_user, user_token):
+def test_normal_user_delete_success(
+    mock_get_valid_normal_user, client, common_user, user_token
+):
     """일반 유저 회원 탈퇴 성공 테스트 (get_valid_normal_user 사용)"""
-    user_info = UserInfo.objects.create(common_user=common_user, name="일반유저")
+    user_info = UserInfo.objects.create(
+        common_user=common_user, name="일반유저"
+    )
     mock_get_valid_normal_user.return_value = user_info
     url = reverse("user:user-delete")
     response = client.delete(
@@ -376,14 +388,18 @@ def test_normal_user_delete_success(mock_get_valid_normal_user, client, common_u
     print(f"Response status code: {response.status_code}")
     print(f"Response content: {response.content}")
     assert response.status_code == 200
-    assert json.loads(response.content) == {"message": "회원 탈퇴가 완료되었습니다."}
+    assert json.loads(response.content) == {
+        "message": "회원 탈퇴가 완료되었습니다."
+    }
     assert not CommonUser.objects.filter(pk=common_user.pk).exists()
     assert not UserInfo.objects.filter(pk=user_info.pk).exists()
 
 
 @pytest.mark.django_db
 @patch("utils.common.get_valid_company_user")
-def test_company_user_delete_success(mock_get_valid_company_user, client, common_company, company_token):
+def test_company_user_delete_success(
+    mock_get_valid_company_user, client, common_company, company_token
+):
     """기업 유저 회원 탈퇴 성공 테스트 (get_valid_company_user 사용)"""
     company_info = CompanyInfo.objects.create(
         common_user=common_company,
@@ -400,7 +416,9 @@ def test_company_user_delete_success(mock_get_valid_company_user, client, common
     print(f"Response status code: {response.status_code}")
     print(f"Response content: {response.content}")
     assert response.status_code == 200
-    assert json.loads(response.content) == {"message": "회원 탈퇴가 완료되었습니다."}
+    assert json.loads(response.content) == {
+        "message": "회원 탈퇴가 완료되었습니다."
+    }
     assert not CommonUser.objects.filter(pk=common_company.pk).exists()
     assert not CompanyInfo.objects.filter(pk=company_info.pk).exists()
 
@@ -408,8 +426,12 @@ def test_company_user_delete_success(mock_get_valid_company_user, client, common
 @pytest.mark.django_db
 def test_user_info_update_success(client, common_user):
     """일반 유저 정보 수정 성공 테스트"""
-    user_info = UserInfo.objects.create(common_user=common_user, name="기존 이름", phone_number="01011112222")
-    url = reverse("user:user-info-update", kwargs={"user_id": user_info.user_id})
+    user_info = UserInfo.objects.create(
+        common_user=common_user, name="기존 이름", phone_number="01011112222"
+    )
+    url = reverse(
+        "user:user-info-update", kwargs={"user_id": user_info.user_id}
+    )
     token = create_access_token(common_user)
     updated_data = {
         "name": "새로운 이름",

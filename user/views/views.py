@@ -42,7 +42,7 @@ from user.schemas import (
     UserLoginResponse,
     UserSignupRequest,
 )
-from utils.common import get_valid_company_user,  get_valid_normal_user
+from utils.common import get_valid_company_user, get_valid_normal_user
 from utils.ncp_storage import upload_to_ncp_storage
 
 from .views_token import create_access_token, create_refresh_token
@@ -176,25 +176,44 @@ class CompanySignupView(View):
 
             # CompanyInfo 생성
             # 사업자등록증 이미지 업로드
-            if 'certificate_image' in request.FILES:
+            if "certificate_image" in request.FILES:
                 try:
-                    certificate_image_url = upload_to_ncp_storage(request.FILES['certificate_image'])
+                    certificate_image_url = upload_to_ncp_storage(
+                        request.FILES["certificate_image"]
+                    )
                 except Exception as e:
-                    return JsonResponse({"message": f"사업자등록증 이미지 업로드 실패: {str(e)}"}, status=500)
+                    return JsonResponse(
+                        {
+                            "message": f"사업자등록증 이미지 업로드 실패: {str(e)}"
+                        },
+                        status=500,
+                    )
 
             # 기업 로고 업로드
-            if 'company_logo' in request.FILES:
+            if "company_logo" in request.FILES:
                 try:
-                    company_logo_url = upload_to_ncp_storage(request.FILES['company_logo'])
+                    company_logo_url = upload_to_ncp_storage(
+                        request.FILES["company_logo"]
+                    )
                 except Exception as e:
-                    return JsonResponse({"message": f"기업 로고 업로드 실패: {str(e)}"}, status=500)
+                    return JsonResponse(
+                        {"message": f"기업 로고 업로드 실패: {str(e)}"},
+                        status=500,
+                    )
 
             # CompanyInfo 생성 (NCP URL 포함)
             company_info = CompanyInfo.objects.create(
                 common_user=user,
                 certificate_image=certificate_image_url,
                 company_logo=company_logo_url,
-                **signup_data.model_dump(exclude={"email", "password", "certificate_image", "company_logo"}),
+                **signup_data.model_dump(
+                    exclude={
+                        "email",
+                        "password",
+                        "certificate_image",
+                        "company_logo",
+                    }
+                ),
             )
             user.is_staff = True
             user.save()
@@ -205,7 +224,7 @@ class CompanySignupView(View):
                     common_user_id=user.common_user_id,
                     email=user.email,
                     join_type=user.join_type,
-                    is_staff=user.is_staff
+                    is_staff=user.is_staff,
                 ),
                 company_info=CompanyInfoModel(
                     company_id=company_info.company_id,
@@ -395,7 +414,9 @@ class LogoutView(View):
 
             # 토큰 디코딩해서 남은 시간 확인
             decoded = jwt.decode(
-                refresh_token, settings.JWT_SECRET_KEY, algorithms=settings.JWT_ALGORITHM
+                refresh_token,
+                settings.JWT_SECRET_KEY,
+                algorithms=settings.JWT_ALGORITHM,
             )
             exp = decoded.get("exp")
             if exp is not None:
@@ -410,10 +431,14 @@ class LogoutView(View):
                 r.setex(f"blacklist:refresh:{refresh_token}", ttl, "true")
 
                 return JsonResponse(
-                    LogoutResponse(message="로그아웃 성공").model_dump(), status=200
+                    LogoutResponse(message="로그아웃 성공").model_dump(),
+                    status=200,
                 )
             else:
-                return JsonResponse({"message": "유효하지 않은 토큰 페이로드입니다."}, status=400)
+                return JsonResponse(
+                    {"message": "유효하지 않은 토큰 페이로드입니다."},
+                    status=400,
+                )
 
         except jwt.ExpiredSignatureError:
             return JsonResponse(
@@ -619,9 +644,13 @@ class UserDeleteView(View):
             if not auth_header or not auth_header.startswith("Bearer "):
                 raise PermissionDenied("Authentication is required.")
 
-            token = auth_header.split(' ')[1]
+            token = auth_header.split(" ")[1]
 
-            payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=settings.JWT_ALGORITHM)
+            payload = jwt.decode(
+                token,
+                settings.JWT_SECRET_KEY,
+                algorithms=settings.JWT_ALGORITHM,
+            )
 
             user_id = payload.get("sub")
             if not user_id:
@@ -632,13 +661,17 @@ class UserDeleteView(View):
             # 'normal' 또는 'company' 유저에 대한 처리
             if common_user.join_type == "normal":
                 # 정상 사용자 처리
-                user_info = get_valid_normal_user(common_user)  # 정상 유저 정보 가져오기
+                user_info = get_valid_normal_user(
+                    common_user
+                )  # 정상 유저 정보 가져오기
                 user_info.delete()  # 삭제
                 common_user.delete()  # 기본 사용자 삭제
 
             elif common_user.join_type == "company":
                 # 기업 사용자 처리
-                company_info = get_valid_company_user(common_user)  # 기업 유저 정보 가져오기
+                company_info = get_valid_company_user(
+                    common_user
+                )  # 기업 유저 정보 가져오기
                 company_info.delete()  # 기업 정보 삭제
                 common_user.delete()  # 기본 사용자 삭제
 
@@ -646,7 +679,9 @@ class UserDeleteView(View):
                 raise PermissionDenied("Invalid user type.")
 
             # 성공적으로 삭제 완료
-            return JsonResponse({"message": "회원 탈퇴가 완료되었습니다."}, status=200)
+            return JsonResponse(
+                {"message": "회원 탈퇴가 완료되었습니다."}, status=200
+            )
 
         except CommonUser.DoesNotExist:
             return JsonResponse({"message": "User not found."}, status=404)
@@ -657,6 +692,6 @@ class UserDeleteView(View):
         except PermissionDenied as e:
             return JsonResponse({"message": str(e)}, status=403)
         except Exception as e:
-            return JsonResponse({"message": "탈퇴 중 오류가 발생했습니다."}, status=500)
-
-
+            return JsonResponse(
+                {"message": "탈퇴 중 오류가 발생했습니다."}, status=500
+            )
