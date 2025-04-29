@@ -22,7 +22,7 @@ from resume.schemas import (
 from resume.serializer import serialize_careers, serialize_certifications
 from user.models import UserInfo
 from user.schemas import UserInfoModel
-from utils.common import get_valid_nomal_user
+from utils.common import get_valid_normal_user
 
 # ------------------------
 # 이력서 관련 api
