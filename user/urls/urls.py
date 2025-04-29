@@ -51,7 +51,7 @@ urlpatterns = [
     ),
     path("kakao/login/", KakaoLoginView.as_view(), name="kakao-login"),
     path("naver/login/", NaverLoginView.as_view(), name="naver-login"),
-    path("find//email/", find_user_email, name="find-user-email"),
+    path("find/email/", find_user_email, name="find-user-email"),
     path("find/company/email/", find_company_email, name="find-company-email"),
     path("reset/password/", reset_user_password, name="reset-user-password"),
     path(
@@ -59,9 +59,13 @@ urlpatterns = [
         reset_company_password,
         name="reset-company-password",
     ),
-    path("info/", UserInfoUpdateView.as_view(), name="user-info-update"),
     path(
-        "company/info/",
+        "info/update/<uuid:user_id>",
+        UserInfoUpdateView.as_view(),
+        name="user-info-update",
+    ),
+    path(
+        "company/info/update/<uuid:company_id>",
         CompanyInfoUpdateView.as_view(),
         name="company-info-update",
     ),

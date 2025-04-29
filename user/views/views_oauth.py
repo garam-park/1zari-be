@@ -15,7 +15,7 @@ from user.schemas import (
 from user.views.views_token import create_access_token, create_refresh_token
 
 
-def create_dummy_password(common_user):
+def create_dummy_password(common_user: CommonUser) -> None:
     dummy_password = CommonUser.objects.make_random_password()
     common_user.set_password(dummy_password)
     common_user.save()
@@ -116,7 +116,7 @@ class KakaoLoginView(View):
             # 커먼유저가 존재하지 않으면 새로 생성하고 더미 비밀번호 추가
             common_user = CommonUser.objects.create(
                 email=email,
-                join_type="user",  # 기본 사용자 설정
+                join_type="normal",
                 is_active=True,
             )
             create_dummy_password(common_user)  # 더미 비밀번호 생성
@@ -210,7 +210,7 @@ class NaverLoginView(View):
         if not common_user:
             common_user = CommonUser.objects.create(
                 email=email,
-                join_type="user",
+                join_type="normal",
                 is_active=True,
             )
             create_dummy_password(common_user)

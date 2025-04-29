@@ -34,7 +34,7 @@ from resume.serializer import (
 )
 from user.models import UserInfo
 from user.schemas import UserInfoModel
-from utils.common import get_valid_company_user, get_valid_nomal_user
+from utils.common import get_valid_company_user, get_valid_normal_user
 
 # ------------------------
 # 지원 관련 api
