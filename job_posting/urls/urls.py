@@ -1,26 +1,31 @@
 from django.urls import path
 
-from job_posting.views.views import (
+from ..views.views import (
     JobPostingBookmarkView,
     JobPostingDetailView,
     JobPostingListView,
 )
 
-app_name = "job_posting"
-
 urlpatterns = [
-    # 공고 리스트 조회
-    path("", JobPostingListView.as_view(), name="list"),
-    # 공고 상세 조회 / 생성 / 수정 / 삭제
+    # 공고 리스트 조회 API
     path(
-        "<uuid:job_posting_id>/", JobPostingDetailView.as_view(), name="detail"
+        "job-postings/", JobPostingListView.as_view(), name="job_posting_list"
     ),
-    # 북마크 등록 / 삭제
+    # 공고 상세 조회, 생성, 수정, 삭제 API
     path(
-        "<uuid:job_posting_id>/bookmark/",
+        "job-postings/<uuid:job_posting_id>/",
+        JobPostingDetailView.as_view(),
+        name="job_posting_detail",
+    ),
+    # 공고 북마크 등록, 삭제, 조회 API
+    path(
+        "job-postings/bookmark/",
         JobPostingBookmarkView.as_view(),
-        name="bookmark",
+        name="job_posting_bookmark_list",
     ),
-    # 북마크 목록 조회
-    path("bookmarks/", JobPostingBookmarkView.as_view(), name="bookmark_list"),
+    path(
+        "job-postings/bookmark/<uuid:job_posting_id>/",
+        JobPostingBookmarkView.as_view(),
+        name="job_posting_bookmark",
+    ),
 ]
