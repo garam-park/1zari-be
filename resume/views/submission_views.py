@@ -167,7 +167,27 @@ class SubmissionDetailView(View):
                 return JsonResponse(
                     {"errors": "Not found submission data"}, status=404
                 )
-            submission_model = SubmissionModel.model_validate(submission)
+            job_posting_model = JobpostingListOutputModel(
+                job_posting_id=submission.job_posting.job_posting_id,
+                city=submission.job_posting.city,
+                district=submission.job_posting.district,
+                company_name=submission.job_posting.company_id.company_name,
+                company_address=submission.job_posting.company_id.company_address,
+                summary=submission.job_posting.summary,
+                deadline=submission.job_posting.deadline,
+                job_posting_title=submission.job_posting.job_posting_title,
+                is_bookmarked=JobPostingBookmark.objects.filter(
+                    user_id=submission.user.user_id
+                ).exists(),
+            )
+            submission_model = SubmissionModel(
+                submission_id=submission.submission_id,
+                snapshot_resume=submission.snapshot_resume,
+                job_posting=job_posting_model,
+                memo=submission.memo,
+                is_read=submission.is_read,
+                created_at=submission.created_at.date(),
+            )
 
             response = SubmissionDetailResponseModel(
                 message="Successfully loaded submission data",
