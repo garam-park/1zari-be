@@ -2,6 +2,7 @@ import json
 import uuid
 from typing import List
 
+from django.contrib.gis.geos import Point
 from django.db import transaction
 from django.http import HttpRequest, JsonResponse
 from django.views import View
@@ -29,7 +30,7 @@ class JobPostingListView(View):
     def get(self, request: HttpRequest) -> JsonResponse:
         try:
             user = request.user
-            postings = JobPosting.objects.all()
+            postings = JobPosting.objects.select_related("company_id").all()
 
             bookmarked_ids = set()
             if isinstance(user, CommonUser):
@@ -69,16 +70,18 @@ class JobPostingDetailView(View):
         self, request: HttpRequest, job_posting_id: uuid.UUID
     ) -> JsonResponse:
         try:
-            post = JobPosting.objects.filter(
-                job_posting_id=job_posting_id
-            ).first()
+            post = (
+                JobPosting.objects.select_related("company_id")
+                .filter(job_posting_id=job_posting_id)
+                .first()
+            )
             if not post:
                 return JsonResponse(
                     {"error": "공고를 찾을 수 없습니다."}, status=404
                 )
 
-            is_bookmarked = False
             user = request.user
+            is_bookmarked = False
             if isinstance(user, CommonUser):
                 is_bookmarked = JobPostingBookmark.objects.filter(
                     user=user, job_posting=post
@@ -86,7 +89,11 @@ class JobPostingDetailView(View):
 
             detail = JobPostingResponseModel(
                 job_posting_id=post.job_posting_id,
+                company_id=post.company_id.company_id,
                 job_posting_title=post.job_posting_title,
+                address=post.address,
+                city=post.city,
+                district=post.district,
                 location=(post.location.x, post.location.y),
                 work_time_start=post.work_time_start,
                 work_time_end=post.work_time_end,
@@ -104,7 +111,6 @@ class JobPostingDetailView(View):
                 salary=post.salary,
                 summary=post.summary,
                 content=post.content,
-                company_id=post.company_id.company_id,
                 is_bookmarked=is_bookmarked,
             )
             response = JobPostingDetailResponseModel(
@@ -128,11 +134,17 @@ class JobPostingDetailView(View):
             data = json.loads(request.body)
             payload = JobPostingCreateModel(**data)
 
+            # location을 Point로 변환
+            location = Point(payload.location[0], payload.location[1])
+
             with transaction.atomic():
-                post = JobPosting.objects.create(  # type: ignore
+                post = JobPosting.objects.create(
                     company_id=company,
                     job_posting_title=payload.job_posting_title,
-                    location=payload.location,
+                    address=payload.address,
+                    city=payload.city,
+                    district=payload.district,
+                    location=location,
                     work_time_start=payload.work_time_start,
                     work_time_end=payload.work_time_end,
                     posting_type=payload.posting_type,
@@ -153,16 +165,16 @@ class JobPostingDetailView(View):
 
             detail = JobPostingResponseModel(
                 job_posting_id=post.job_posting_id,
+                company_id=company.company_id,
                 job_posting_title=post.job_posting_title,
+                address=post.address,
+                city=post.city,
+                district=post.district,
                 location=(post.location.x, post.location.y),
                 work_time_start=post.work_time_start,
                 work_time_end=post.work_time_end,
                 posting_type=post.posting_type,
-                employment_type=(
-                    post.posting_employment_type  # type: ignore
-                    if hasattr(post, "employment_type")
-                    else post.employment_type
-                ),
+                employment_type=post.employment_type,
                 job_keyword_main=post.job_keyword_main,
                 job_keyword_sub=post.job_keyword_sub,
                 number_of_positions=post.number_of_positions,
@@ -175,7 +187,6 @@ class JobPostingDetailView(View):
                 salary=post.salary,
                 summary=post.summary,
                 content=post.content,
-                company_id=company.company_id,
                 is_bookmarked=False,
             )
             response = JobPostingDetailResponseModel(
@@ -209,16 +220,29 @@ class JobPostingDetailView(View):
 
             data = json.loads(request.body)
             payload = JobPostingUpdateModel(**data)
+
+            # location이 있으면 Point로 변환
+            if payload.location:
+                location = Point(payload.location[0], payload.location[1])
+                post.location = location
+
             for field, value in payload.model_dump(exclude_unset=True).items():
                 setattr(post, field, value)
             post.save()
 
-            is_bookmarked = JobPostingBookmark.objects.filter(  # type: ignore
-                user=user, job_posting=post
-            ).exists()
+            is_bookmarked = False
+            if isinstance(user, CommonUser):
+                is_bookmarked = JobPostingBookmark.objects.filter(
+                    user=user, job_posting=post
+                ).exists()
+
             detail = JobPostingResponseModel(
                 job_posting_id=post.job_posting_id,
+                company_id=post.company_id.company_id,
                 job_posting_title=post.job_posting_title,
+                address=post.address,
+                city=post.city,
+                district=post.district,
                 location=(post.location.x, post.location.y),
                 work_time_start=post.work_time_start,
                 work_time_end=post.work_time_end,
@@ -236,7 +260,6 @@ class JobPostingDetailView(View):
                 salary=post.salary,
                 summary=post.summary,
                 content=post.content,
-                company_id=company.company_id,
                 is_bookmarked=is_bookmarked,
             )
             response = JobPostingDetailResponseModel(
@@ -290,10 +313,11 @@ class JobPostingBookmarkView(View):
                     {"error": "인증된 사용자만 접근할 수 있습니다."}, status=403
                 )
 
-            bookmarks = JobPostingBookmark.objects.filter(
-                user=user
-            ).select_related("job_posting__company_id")
-            items: List[JobPostingBookmarkListItemModel] = [
+            bookmarks = JobPostingBookmark.objects.select_related(
+                "job_posting__company_id"
+            ).filter(user=user)
+
+            items = [
                 JobPostingBookmarkListItemModel(
                     job_posting_id=b.job_posting.job_posting_id,
                     job_posting_title=b.job_posting.job_posting_title,
