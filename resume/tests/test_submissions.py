@@ -17,7 +17,7 @@ def mock_common_user(db):
     user = CommonUser.objects.create(
         email="test@test.com",
         password="1q2w3e4r",
-        join_type="nomal",
+        join_type="normal",
         is_active=True,
         last_login=None,
     )
@@ -84,6 +84,7 @@ def mock_job_posting(db, mock_company_user):
         employment_type="경력",
         city="인천광역시",
         district="부평구",
+        town="부평동",
         job_keyword_main="개발",
         job_keyword_sub=["백엔드", "Django", "Python"],
         number_of_positions=2,
