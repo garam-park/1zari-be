@@ -340,7 +340,6 @@ def test_submission_create_success(
     response = client.post(url, post_data, content_type="application/json")
 
     response_data = json.loads(response.content)
-    print(response_data)
     assert response.status_code == 201
 
 
@@ -363,7 +362,6 @@ def test_submission_company_detail_get_success(
     client.force_login(mock_common_company_user)
 
     response = client.get(url, content_type="application/json")
-    print(json.loads(response.content))
     response_data = json.loads(response.content)["submission"]
 
     assert response.status_code == 200

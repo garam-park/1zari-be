@@ -116,7 +116,6 @@ def test_my_resume_list_view_get(client, mock_user, mock_common_user):
     client.force_login(mock_common_user)
 
     response = client.get(url, content_type="application_json")
-    print(json.loads(response.content))
     assert response.status_code == 200
     data = json.loads(response.content)
 
