@@ -46,13 +46,5 @@ if __name__ == "__main__":
     save_regions_to_redis(regions)
     print("All regions uploaded to Redis.")
 
-# class SearchMainView(View):
-#
-#     def get(self, request: HttpRequest) -> JsonResponse:
-#         try:
-#             token = request.user
-#             user = get_valid_nomal_user(token)
-#         except Exception as e:
-#             return JsonResponse({"errors": f"{str(e)}"}, status=400)
 
 fetch_regions()
