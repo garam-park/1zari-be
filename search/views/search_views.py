@@ -22,7 +22,8 @@ class SearchView(View):
 
     def get(self, request: HttpRequest) -> JsonResponse:
         token = request.user
-        user = get_valid_normal_user(token)
+        if token.join_type == "normal":  # type: ignore
+            user = get_valid_normal_user(token)
 
         try:
             query = JobPostingSearchQueryModel(
@@ -69,7 +70,7 @@ class SearchView(View):
 
         if not region_qs.exists():
             return JsonResponse(
-                {"results": [], "error": "지역 정보를 찾을 수 없습니다."},
+                {"results": [], "error": "Not found region data."},
                 status=404,
             )
 
@@ -93,7 +94,7 @@ class SearchView(View):
                 district=jp.district,
                 is_bookmarked=(
                     JobPostingBookmark.objects.filter(
-                        job_posting=jp, user=user.common_user
+                        job_posting=jp, user=user.common_user_id
                     ).exists()
                     if user
                     else False
