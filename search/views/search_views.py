@@ -18,31 +18,23 @@ from search.schemas import (
 from utils.common import get_valid_normal_user
 
 
-def none_if_empty(lst):
-    return lst if lst else None
-
-
 class SearchView(View):
 
     def get(self, request: HttpRequest) -> JsonResponse:
         token = request.user
         user = get_valid_normal_user(token)
 
-        query_params = {
-            "city": none_if_empty(request.GET.getlist("city")),
-            "district": none_if_empty(request.GET.getlist("district")),
-            "town": none_if_empty(request.GET.getlist("town")),
-            "work_day": none_if_empty(request.GET.getlist("work_day")),
-            "posting_type": none_if_empty(request.GET.getlist("posting_type")),
-            "employment_type": none_if_empty(
-                request.GET.getlist("employment_type")
-            ),
-            "education": none_if_empty(request.GET.getlist("education")),
-            "search": request.GET.get("search"),
-        }
-
         try:
-            query = JobPostingSearchQueryModel(**query_params)
+            query = JobPostingSearchQueryModel(
+                city=request.GET.getlist("city"),
+                district=request.GET.getlist("district"),
+                town=request.GET.getlist("town"),
+                work_day=request.GET.getlist("work_day"),
+                posting_type=request.GET.getlist("posting_type"),
+                employment_type=request.GET.getlist("employment_type"),
+                education=request.GET.get("education", ""),
+                search=request.GET.get("search", ""),
+            )
         except ValidationError as e:
             return JsonResponse({"errors": e.errors()}, status=400)
 
@@ -70,9 +62,9 @@ class SearchView(View):
             )
 
         region_qs = District.objects.filter(
-            city_name__in=query.city if query.city else [],
-            district_name__in=query.district if query.district else [],
-            emd_name__in=query.town if query.town else [],
+            city_name__in=query.city,
+            district_name__in=query.district,
+            emd_name__in=query.town,
         )
 
         if not region_qs.exists():

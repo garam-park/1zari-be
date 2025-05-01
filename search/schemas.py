@@ -2,10 +2,14 @@ from datetime import date
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, RootModel
+
+from utils.schemas import MY_CONFIG
 
 
 class JobPostingResultModel(BaseModel):
+    model_config = MY_CONFIG
+
     job_posting_id: UUID
     job_posting_title: str
     city: str
@@ -15,23 +19,25 @@ class JobPostingResultModel(BaseModel):
 
 
 class JobPostingSearchQueryModel(BaseModel):
-    city: Optional[List[str]] = None
-    district: Optional[List[str]] = None
-    town: Optional[List[str]] = None
-    work_day: Optional[List[str]] = None
-    posting_type: Optional[List[str]] = None
-    employment_type: Optional[List[str]] = None
-    education: Optional[str] = None
-    search: Optional[str] = None
+    model_config = MY_CONFIG
+
+    city: list[str]
+    district: list[str]
+    town: list[str]
+    work_day: list[str]
+    posting_type: list[str]
+    employment_type: list[str]
+    education: str
+    search: str
 
 
 class JobPostingSearchResponseModel(BaseModel):
+    model_config = MY_CONFIG
+
     results: List[JobPostingResultModel]
 
 
-class RegionTreeResponse(BaseModel):
+class RegionTreeResponse(RootModel[Dict[str, Dict[str, List[str]]]]):
     """
     지역 계층 구조 응답 모델
     """
-
-    __root__: Dict[str, Dict[str, List[str]]]
