@@ -11,9 +11,11 @@ RUN apt-get update && \
   libgeos-dev \
   && rm -rf /var/lib/apt/lists/*
 
-# GDAL 심볼릭 링크가 없으면 생성
-RUN if [ ! -e /usr/lib/x86_64-linux-gnu/libgdal.so ]; then \
-      ln -s /usr/lib/x86_64-linux-gnu/libgdal.so.* /usr/lib/x86_64-linux-gnu/libgdal.so; \
+# GDAL 심볼릭 링크가 없으면 생성 (여러 위치 대응)
+RUN set -eux; \
+    GDAL_SO=$(find /usr/lib /usr/lib/x86_64-linux-gnu -name "libgdal.so.*" | head -n 1); \
+    if [ -n "$GDAL_SO" ]; then \
+      ln -sf "$GDAL_SO" /usr/lib/libgdal.so; \
     fi
 
 # poetry 설치
