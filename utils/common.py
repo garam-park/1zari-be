@@ -10,7 +10,7 @@ def get_valid_normal_user(token: Union[CommonUser, AnonymousUser]) -> UserInfo:
     if not token.is_authenticated:
         raise PermissionDenied("Authentication is required.")
     if token.join_type != "normal":
-        raise PermissionDenied("Only 'nomal' users are allowed.")
+        raise PermissionDenied("Only 'normal' users are allowed.")
     user = UserInfo.objects.filter(common_user=token.common_user_id).first()
     if user is None:
         raise PermissionDenied("UserInfo does not exist.")

@@ -116,6 +116,7 @@ class JobpostingListOutputModel(BaseModel):
     job_posting_id: UUID
     city: str
     district: str
+    town: str
     company_name: str
     company_address: str
     job_posting_title: str

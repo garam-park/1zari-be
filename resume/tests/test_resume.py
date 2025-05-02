@@ -70,7 +70,7 @@ def mock_common_user(db):
     user = CommonUser.objects.create(
         email="test@test.com",
         password="1q2w3e4r",
-        join_type="nomal",
+        join_type="normal",
         is_active=True,
         last_login=None,
     )
@@ -116,9 +116,9 @@ def test_my_resume_list_view_get(client, mock_user, mock_common_user):
     client.force_login(mock_common_user)
 
     response = client.get(url, content_type="application_json")
-
     assert response.status_code == 200
     data = json.loads(response.content)
+
     assert "resume_list" in data
     assert len(data["resume_list"]) >= 1
 

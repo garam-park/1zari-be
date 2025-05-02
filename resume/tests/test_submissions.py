@@ -17,7 +17,7 @@ def mock_common_user(db):
     user = CommonUser.objects.create(
         email="test@test.com",
         password="1q2w3e4r",
-        join_type="nomal",
+        join_type="normal",
         is_active=True,
         last_login=None,
     )
@@ -84,6 +84,7 @@ def mock_job_posting(db, mock_company_user):
         employment_type="경력",
         city="인천광역시",
         district="부평구",
+        town="부평동",
         job_keyword_main="개발",
         job_keyword_sub=["백엔드", "Django", "Python"],
         number_of_positions=2,
@@ -339,7 +340,6 @@ def test_submission_create_success(
     response = client.post(url, post_data, content_type="application/json")
 
     response_data = json.loads(response.content)
-    print(response_data)
     assert response.status_code == 201
 
 
@@ -362,7 +362,6 @@ def test_submission_company_detail_get_success(
     client.force_login(mock_common_company_user)
 
     response = client.get(url, content_type="application/json")
-    print(json.loads(response.content))
     response_data = json.loads(response.content)["submission"]
 
     assert response.status_code == 200
