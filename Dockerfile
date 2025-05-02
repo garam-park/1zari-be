@@ -13,10 +13,16 @@ RUN apt-get update && \
 
 # GDAL 심볼릭 링크가 없으면 생성 (여러 위치 대응)
 RUN set -eux; \
-    GDAL_SO=$(find /usr/lib /usr/lib/x86_64-linux-gnu -name "libgdal.so.*" | head -n 1); \
+  GDAL_SO=$(find /usr/lib /usr/lib/x86_64-linux-gnu /usr/lib/aarch64-linux-gnu -name "libgdal.so*" | head -n 1); \
     if [ -n "$GDAL_SO" ]; then \
       ln -sf "$GDAL_SO" /usr/lib/libgdal.so; \
     fi
+# GEOS 심볼릭 링크가 없으면 생성 (여러 위치 대응)
+RUN set -eux; \
+  GEOS_SO=$(find /usr/lib /usr/lib/x86_64-linux-gnu /usr/lib/aarch64-linux-gnu -name "libgeos_c.so*" | head -n 1); \
+  if [ -n "$GEOS_SO" ]; then \
+  ln -sf "$GEOS_SO" /usr/lib/libgeos_c.so; \
+  fi
 
 # poetry 설치
 RUN pip install --upgrade pip 

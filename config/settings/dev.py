@@ -13,7 +13,9 @@ if os.environ.get("CI") == "true":
 elif platform.system() == "Linux":
     # Docker, 리눅스 환경 경로 (aarch64 등 포함)
     GDAL_LIBRARY_PATH = "/usr/lib/libgdal.so"
-    GEOS_LIBRARY_PATH = "/usr/lib/libgeos_c.so"
+    # GEOS_LIBRARY_PATH = "/usr/lib/libgeos_c.so"
+    GEOS_LIBRARY_PATH = "/usr/lib/aarch64-linux-gnu/libgeos_c.so"
+    # GEOS_LIBRARY_PATH = "/usr/lib/libgeos_c.so"
     #  # Docker, 리눅스 환경 경로
     # GDAL_LIBRARY_PATH = "/usr/lib/x86_64-linux-gnu/libgdal.so"
     # GEOS_LIBRARY_PATH = "/usr/lib/x86_64-linux-gnu/libgeos_c.so"

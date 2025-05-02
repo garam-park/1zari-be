@@ -48,9 +48,13 @@ from utils.ncp_storage import upload_to_ncp_storage
 from .views_token import create_access_token, create_refresh_token
 
 User = get_user_model()
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class CommonUserCreateView(View):
+    
     def post(self, request, *args, **kwargs) -> JsonResponse:
         try:
             body = json.loads(request.body.decode())
@@ -242,7 +246,7 @@ class CompanySignupView(View):
                 {"message": "서버 오류", "error": str(e)}, status=500
             )
 
-
+@method_decorator(csrf_exempt, name="dispatch")
 class UserLoginView(View):
     # 일반 사용자 로그인
     def post(self, request, *args, **kwargs) -> JsonResponse:
