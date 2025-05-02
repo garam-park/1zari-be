@@ -12,16 +12,17 @@ RUN apt-get update && \
   && rm -rf /var/lib/apt/lists/*
 
 # poetry 설치
-RUN pip install --upgrade pip && \
-  pip install poetry
+RUN pip install --upgrade pip 
+RUN pip install poetry 
 
 # 작업 디렉토리 설정
 WORKDIR /app
 
 # poetry 설정 파일 복사 및 의존성 설치
 COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.create false && \
-  poetry install --no-interaction --no-ansi --only main
+RUN poetry config virtualenvs.create false
+RUN touch /app/README.md
+RUN poetry install --no-interaction --no-ansi --only main
 
 # 소스 복사
 COPY . .
