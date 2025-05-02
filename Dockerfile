@@ -22,7 +22,7 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false
 RUN touch /app/README.md
-RUN poetry install --no-interaction --no-ansi --only main
+RUN poetry install --no-interaction --no-ansi --only main --no-root
 
 # 소스 복사
 COPY . .
