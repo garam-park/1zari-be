@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: oz-db
+    environment:
+      POSTGRES_DB: oz_db
+      POSTGRES_USER: oz_user
+      POSTGRES_PASSWORD: oz_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: oz-web
+    command: >
+      sh -c "poetry install && \
+             python manage.py migrate && \
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DATABASE_URL: postgres://oz_user:oz_password@db:5432/oz_db
+    depends_on:
+      - db
+
+volumes:
+  db_data:
