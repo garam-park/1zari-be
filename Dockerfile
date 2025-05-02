@@ -11,6 +11,11 @@ RUN apt-get update && \
   libgeos-dev \
   && rm -rf /var/lib/apt/lists/*
 
+# GDAL 심볼릭 링크가 없으면 생성
+RUN if [ ! -e /usr/lib/x86_64-linux-gnu/libgdal.so ]; then \
+      ln -s /usr/lib/x86_64-linux-gnu/libgdal.so.* /usr/lib/x86_64-linux-gnu/libgdal.so; \
+    fi
+
 # poetry 설치
 RUN pip install --upgrade pip 
 RUN pip install poetry 
